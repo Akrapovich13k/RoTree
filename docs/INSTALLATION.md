@@ -53,14 +53,33 @@ Plugins talk to VS Code over `http://localhost:34872`. For that:
 
 ## 2. Install the `rotree` CLI (terminal client)
 
+### One-line install (recommended)
+
+**macOS / Linux:**
+
 ```bash
-# from the repo root
+curl -fsSL https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.ps1 | iex
+```
+
+Requires Node.js 18+ on your PATH. The script downloads a single 23 KB self-contained file into `~/.local/bin/rotree` (or `%LOCALAPPDATA%\rotree\bin\rotree.cmd` on Windows). No `git clone`, no `npm install`, no build step.
+
+Override the install location with `ROTREE_INSTALL_DIR=/usr/local/bin curl ... | bash`.
+
+### From source (if you've cloned the repo)
+
+```bash
 npm install
 npm run build
 npm install -g ./cli
 ```
 
-Verify:
+### Verify
 
 ```bash
 rotree version

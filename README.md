@@ -27,9 +27,23 @@
 - ❌ Modify your game without an explicit click + confirmation
 - ❌ Touch DataStores, leaderstats, purchases without a special warning
 
-## Quick start
+## Install
 
-You can run the bridge two ways — pick whichever you prefer.
+**macOS / Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.ps1 | iex
+```
+
+That's it. Requires Node.js 18+. Drops a single `rotree` binary into `~/.local/bin` (or `%LOCALAPPDATA%\rotree\bin` on Windows).
+
+Then in Roblox Studio you still need to install the plugin once — see [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+
+## Quick start
 
 **From a terminal, like Rojo:**
 ```bash
@@ -42,9 +56,7 @@ rotree serve         # listens on http://localhost:34872
 Command Palette → RoTree: Start Bridge
 ```
 
-Either way, in Roblox Studio you then click **RoTree → Export Game Tree**, and the export appears in `.rotree/` next to your code.
-
-Full install steps in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+Either way, in Roblox Studio click **RoTree → Export Game Tree**, and the export appears in `.rotree/` next to your code.
 
 ## Documentation
 
