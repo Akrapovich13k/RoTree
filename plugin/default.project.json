@@ -1,0 +1,6 @@
+{
+  "name": "RoTree",
+  "tree": {
+    "$path": "src"
+  }
+}

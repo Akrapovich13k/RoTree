@@ -1,0 +1,13 @@
+{
+  "id": "fix-shop-typo",
+  "title": "Fix typo in ShopServer error message",
+  "description": "Replaces 'inssufficient' with 'insufficient' in the ShopServer 'not enough coins' branch.",
+  "critical": false,
+  "ops": [
+    {
+      "op": "setSource",
+      "path": "ServerScriptService.ShopServer",
+      "source": "-- ShopServer.luau\nlocal Remotes = game:GetService(\"ReplicatedStorage\"):WaitForChild(\"Remotes\")\nlocal BuyItem = Remotes:WaitForChild(\"BuyItem\")\n\nBuyItem.OnServerInvoke = function(player, itemId)\n    local data = require(script.Parent.PlayerData):Get(player)\n    if data.coins < 100 then\n        return false, \"insufficient coins\"\n    end\n    data.coins -= 100\n    return true\nend\n"
+    }
+  ]
+}

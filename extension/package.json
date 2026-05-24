@@ -1,0 +1,83 @@
+{
+  "name": "rotree",
+  "displayName": "RoTree",
+  "description": "Roblox Game Tree Bridge — read Roblox Studio from VS Code, so Claude can understand your game.",
+  "version": "0.1.0",
+  "publisher": "rotree",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["roblox", "luau", "claude", "rojo"],
+  "main": "./out/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "rotree.startBridge", "title": "RoTree: Start Bridge" },
+      { "command": "rotree.stopBridge",  "title": "RoTree: Stop Bridge" },
+      { "command": "rotree.openGameTree", "title": "RoTree: Open Game Tree" },
+      { "command": "rotree.refresh", "title": "RoTree: Refresh" },
+      { "command": "rotree.showScriptMap", "title": "RoTree: Show Script Map" },
+      { "command": "rotree.showRemotesMap", "title": "RoTree: Show Remotes Map" },
+      { "command": "rotree.showGuiMap", "title": "RoTree: Show GUI Map" },
+      { "command": "rotree.createContext", "title": "RoTree: Create Claude Context" },
+      { "command": "rotree.compareRojo", "title": "RoTree: Compare With Rojo Project" },
+      { "command": "rotree.openSummary", "title": "RoTree: Open Summary" },
+      { "command": "rotree.openFolder", "title": "RoTree: Open Export Folder" },
+      { "command": "rotree.previewPatch", "title": "RoTree: Preview Patch" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rotree",
+          "title": "RoTree",
+          "icon": "icons/rotree.svg"
+        }
+      ]
+    },
+    "views": {
+      "rotree": [
+        { "id": "rotree.gameTree", "name": "Game Tree" },
+        { "id": "rotree.scripts",  "name": "Scripts" },
+        { "id": "rotree.remotes",  "name": "Remotes" },
+        { "id": "rotree.gui",      "name": "GUI" },
+        { "id": "rotree.services", "name": "Services" },
+        { "id": "rotree.rojo",     "name": "Rojo" },
+        { "id": "rotree.context",  "name": "Claude Context" }
+      ]
+    },
+    "configuration": {
+      "title": "RoTree",
+      "properties": {
+        "rotree.port": {
+          "type": "number",
+          "default": 34872,
+          "description": "Local HTTP port for the Studio bridge."
+        },
+        "rotree.autoStartBridge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the bridge automatically when a workspace is opened."
+        },
+        "rotree.exportFolder": {
+          "type": "string",
+          "default": ".rotree",
+          "description": "Subfolder inside the workspace where exports are written."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "package": "vsce package --no-dependencies",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.4.0"
+  }
+}

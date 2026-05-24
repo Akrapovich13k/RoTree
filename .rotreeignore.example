@@ -1,0 +1,23 @@
+# RoTree ignore list.
+# Same syntax as .gitignore. The plugin asks VS Code for this list on every export.
+#
+# A normal line redacts the matched paths in Safe Mode (Source replaced with null,
+# path still appears in the tree).
+#
+# Prefix with "critical:" to additionally require a DOUBLE confirmation before any
+# patch can touch the matched path.
+
+# Don't ship anti-cheat source code
+ServerScriptService/Anticheat/**
+ServerScriptService/Anticheat.luau
+
+# Per-place secrets folder
+ReplicatedStorage/Secrets/**
+
+# Huge unused maps
+Workspace/Map_Old/**
+
+# Critical patterns (extra confirmation required)
+critical: ServerScriptService/DataStore/**
+critical: ServerScriptService/Purchases/**
+critical: **/leaderstats/**

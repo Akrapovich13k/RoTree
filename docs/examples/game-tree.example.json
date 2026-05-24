@@ -1,0 +1,125 @@
+[
+  {
+    "name": "Workspace",
+    "className": "Workspace",
+    "fullPath": "Workspace",
+    "isScript": false,
+    "isGui": false,
+    "isRemote": false,
+    "isPart": false,
+    "isModel": false,
+    "children": [
+      {
+        "name": "SpawnLocation",
+        "className": "SpawnLocation",
+        "fullPath": "Workspace.SpawnLocation",
+        "isScript": false,
+        "isGui": false,
+        "isRemote": false,
+        "isPart": true,
+        "isModel": false
+      },
+      {
+        "name": "Shop",
+        "className": "Model",
+        "fullPath": "Workspace.Shop",
+        "isScript": false,
+        "isGui": false,
+        "isRemote": false,
+        "isPart": false,
+        "isModel": true,
+        "tags": ["Interactable"],
+        "children": [
+          {
+            "name": "Trigger",
+            "className": "Part",
+            "fullPath": "Workspace.Shop.Trigger",
+            "isScript": false,
+            "isGui": false,
+            "isRemote": false,
+            "isPart": true,
+            "isModel": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ReplicatedStorage",
+    "className": "ReplicatedStorage",
+    "fullPath": "ReplicatedStorage",
+    "isScript": false,
+    "isGui": false,
+    "isRemote": false,
+    "isPart": false,
+    "isModel": false,
+    "children": [
+      {
+        "name": "Remotes",
+        "className": "Folder",
+        "fullPath": "ReplicatedStorage.Remotes",
+        "isScript": false,
+        "isGui": false,
+        "isRemote": false,
+        "isPart": false,
+        "isModel": false,
+        "children": [
+          {
+            "name": "BuyItem",
+            "className": "RemoteFunction",
+            "fullPath": "ReplicatedStorage.Remotes.BuyItem",
+            "isScript": false,
+            "isGui": false,
+            "isRemote": true,
+            "isPart": false,
+            "isModel": false
+          }
+        ]
+      },
+      {
+        "name": "Shared",
+        "className": "Folder",
+        "fullPath": "ReplicatedStorage.Shared",
+        "isScript": false,
+        "isGui": false,
+        "isRemote": false,
+        "isPart": false,
+        "isModel": false,
+        "children": [
+          {
+            "name": "Items",
+            "className": "ModuleScript",
+            "fullPath": "ReplicatedStorage.Shared.Items",
+            "isScript": true,
+            "isGui": false,
+            "isRemote": false,
+            "isPart": false,
+            "isModel": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ServerScriptService",
+    "className": "ServerScriptService",
+    "fullPath": "ServerScriptService",
+    "isScript": false,
+    "isGui": false,
+    "isRemote": false,
+    "isPart": false,
+    "isModel": false,
+    "children": [
+      {
+        "name": "ShopServer",
+        "className": "Script",
+        "fullPath": "ServerScriptService.ShopServer",
+        "isScript": true,
+        "isGui": false,
+        "isRemote": false,
+        "isPart": false,
+        "isModel": false
+      }
+    ]
+  }
+]
