@@ -5,9 +5,11 @@
 # Build artifacts
 plugin/RoTree.rbxm
 plugin/RoTree.rbxmx
-extension/out/
-extension/node_modules/
+node_modules/
+**/node_modules/
+**/out/
 extension/*.vsix
+cli/*.tgz
 
 # Editor noise
 .DS_Store

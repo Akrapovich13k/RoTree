@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import { ExportReader } from "./ExportReader";
-import { Patch } from "../types";
+import { Patch } from "./types";
 
 export class PatchManager {
   constructor(private readonly reader: ExportReader) {}

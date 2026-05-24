@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as fs from "fs/promises";
-import * as vscode from "vscode";
 import {
   ExportPayload,
   BackupPayload,
@@ -8,26 +7,25 @@ import {
   RemoteEntry,
   GuiEntry,
   TreeNode,
-  ExportStats,
-} from "../types";
+  LastExportInfo,
+} from "./types";
 
-interface LastExportInfo {
-  placeName: string;
-  placeId: number;
-  pluginVersion: string;
-  exportedAt: string;
-  kind: string;
-  stats: ExportStats;
+export interface ExportReaderOptions {
+  workspaceRoot: string;
+  exportFolderName?: string;
 }
 
 export class ExportReader {
-  constructor(private readonly workspaceRoot: string) {}
+  private readonly workspaceRoot: string;
+  private readonly exportFolderName: string;
+
+  constructor(opts: ExportReaderOptions) {
+    this.workspaceRoot = opts.workspaceRoot;
+    this.exportFolderName = opts.exportFolderName ?? ".rotree";
+  }
 
   get folder(): string {
-    const cfg = vscode.workspace
-      .getConfiguration("rotree")
-      .get<string>("exportFolder", ".rotree");
-    return path.join(this.workspaceRoot, cfg);
+    return path.join(this.workspaceRoot, this.exportFolderName);
   }
 
   async ensureFolder(): Promise<void> {
@@ -61,12 +59,10 @@ export class ExportReader {
       await this.writeJson("collection-tags.json", p.tags);
     }
 
-    // Services map: pivot the tree by root service.
     if (p.tree && p.tree.length > 0) {
       const services: Record<string, { children: number; classes: Record<string, number> }> = {};
       for (const node of p.tree) {
-        const c = this.countChildren(node);
-        services[node.name] = c;
+        services[node.name] = this.countChildren(node);
       }
       await this.writeJson("services-map.json", services);
     }

@@ -2,6 +2,19 @@
 
 ## Daily workflow
 
+You can drive RoTree from a terminal (like Rojo) **or** from VS Code. Pick one.
+
+### From a terminal
+
+```bash
+cd ~/MyRobloxGame
+rotree serve
+```
+
+Leave that running. In Roblox Studio: **RoTree → Export Game Tree**. `.rotree/` populates next to your code. Read `.rotree/CLAUDE_CONTEXT.md` with Claude.
+
+### From VS Code
+
 1. **Open your Roblox project folder in VS Code.**
 2. Run **RoTree: Start Bridge** (Command Palette). Status bar lights up green.
 3. In Roblox Studio, open the place you're working on.
@@ -46,6 +59,20 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 └── backups/
     └── 2026-05-24-pre-patch-fix-shop.json
 ```
+
+## CLI commands
+
+| Command            | What it does                                                    |
+|--------------------|-----------------------------------------------------------------|
+| `rotree serve`     | Start the bridge (like `rojo serve`). Ctrl+C to stop.           |
+| `rotree build`     | Build `RoTree.rbxm` from `plugin/` via Rojo.                    |
+| `rotree context`   | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export.    |
+| `rotree compare`   | Print a Rojo ↔ Studio diff in the terminal.                     |
+| `rotree init`      | Scaffold a `.rotreeignore` in the current directory.            |
+| `rotree version`   | Print version.                                                  |
+| `rotree help`      | Show usage.                                                     |
+
+All commands accept `--cwd <dir>`, `--output <dir>`, and (for `serve`) `--port <n>`.
 
 ## VS Code commands
 

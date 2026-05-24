@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
+import { ExportReader } from "@rotree/core";
 
 interface ServiceSummary {
   children: number;

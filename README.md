@@ -4,10 +4,12 @@
 
 ```
 ┌─────────────────────────┐        HTTP POST          ┌──────────────────────────┐
-│  Roblox Studio          │   localhost:34872         │  VS Code                 │
-│  RoTree Plugin (Luau)   │ ────────────────────────► │  RoTree Extension (TS)   │
-│  scans game tree        │                           │  writes .rotree/         │
-└─────────────────────────┘                           └──────────────────────────┘
+│  Roblox Studio          │   localhost:34872         │   rotree serve   (CLI)   │
+│  RoTree Plugin (Luau)   │ ────────────────────────► │         OR               │
+│  scans game tree        │                           │   RoTree (VS Code ext.)  │
+└─────────────────────────┘                           │   → writes .rotree/      │
+                                                      └──────────────────────────┘
+                                                          both use @rotree/core
 ```
 
 ## What it does
@@ -27,11 +29,22 @@
 
 ## Quick start
 
-1. Install the plugin in Roblox Studio — see [`docs/INSTALLATION.md`](docs/INSTALLATION.md)
-2. Install the VS Code extension
-3. Open your game folder in VS Code → run `RoTree: Start Bridge`
-4. In Studio, click **RoTree → Export Game Tree**
-5. Open `.rotree/CLAUDE_CONTEXT.md` and let Claude read your game
+You can run the bridge two ways — pick whichever you prefer.
+
+**From a terminal, like Rojo:**
+```bash
+cd ~/MyRobloxGame
+rotree serve         # listens on http://localhost:34872
+```
+
+**From VS Code:**
+```
+Command Palette → RoTree: Start Bridge
+```
+
+Either way, in Roblox Studio you then click **RoTree → Export Game Tree**, and the export appears in `.rotree/` next to your code.
+
+Full install steps in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Documentation
 
@@ -44,11 +57,15 @@
 
 ```
 plugin/         Roblox Studio plugin (Luau, buildable with Rojo)
-extension/      VS Code extension (TypeScript)
+core/           Shared TypeScript core (HTTP, file IO, Rojo, context)
+cli/            `rotree` CLI (rotree serve / build / context / compare / init)
+extension/      VS Code extension (uses core, adds sidebar + commands)
 docs/           Architecture & guides
 .rotreeignore   Per-project ignore list (created on first export)
 .rotree/        Export folder (auto-generated, gitignore'd by default)
 ```
+
+The CLI and the VS Code extension share the **same** `@rotree/core` package — identical filesystem layout, identical security boundaries.
 
 ## License
 

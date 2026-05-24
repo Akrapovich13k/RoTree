@@ -98,12 +98,20 @@ For patches, the reverse flow is:
 |-------------------------------------|-------------|--------------------------------------------------|
 | `plugin/src/init.server.luau`       | Plugin      | Plugin entry: toolbar, widget, wiring            |
 | `plugin/src/UI/`                    | Plugin      | All UI code, isolated from logic                 |
-| `plugin/src/Services/Scanners/`     | Plugin      | Read-only game tree walkers                      |
+| `plugin/src/Services/`              | Plugin      | Scanners + HTTP bridge + patch service           |
 | `plugin/src/Services/HttpBridge`    | Plugin      | The single network point                         |
 | `plugin/src/Services/PatchService`  | Plugin      | The single mutation point (gated)                |
-| `extension/src/server/HttpServer.ts`| Extension   | Receives export, validates, writes               |
+| `core/src/HttpServer.ts`            | Core (TS)   | Receives export, validates, writes               |
+| `core/src/ExportReader.ts`          | Core (TS)   | Splits payload to `.rotree/*` files              |
+| `core/src/ContextBuilder.ts`        | Core (TS)   | Builds `CLAUDE_CONTEXT.md`                       |
+| `core/src/RojoComparator.ts`        | Core (TS)   | Diffs Studio export vs `default.project.json`    |
+| `core/src/PatchManager.ts`          | Core (TS)   | Patch file IO                                    |
+| `cli/src/index.ts`                  | CLI         | `rotree` binary — wraps core for terminal use    |
+| `extension/src/extension.ts`        | Extension   | VS Code wrapper — wraps core for sidebar use     |
 | `extension/src/providers/`          | Extension   | Tree views in the sidebar                        |
-| `extension/src/services/`           | Extension   | Context, comparison, patch management            |
+| `extension/src/commands/`           | Extension   | VS Code command handlers                         |
+
+The CLI and the extension are **thin shells** over `@rotree/core`. Same behavior, same security guarantees, different surfaces.
 
 ## Security boundaries
 

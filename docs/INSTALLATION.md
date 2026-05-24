@@ -1,6 +1,13 @@
 # Installing RoTree
 
-You need to install **two things**: the Roblox Studio plugin and the VS Code extension. Both are in this repo.
+You install:
+
+1. **The Roblox Studio plugin** (always required — it scans the game)
+2. **One of two clients** that receives the export:
+   - The **`rotree` CLI** (recommended for terminal users — works like `rojo serve`)
+   - The **VS Code extension** (recommended if you live in VS Code — adds a sidebar)
+
+Both clients use the same `@rotree/core` package and write to the same `.rotree/` folder. You can install both — only one needs to be running at a time.
 
 ## Prerequisites
 
@@ -44,7 +51,42 @@ Plugins talk to VS Code over `http://localhost:34872`. For that:
 
 > If you don't want HTTP enabled in your published place, use a fresh blank place for RoTree work — settings are per-place.
 
-## 2. Build & install the VS Code extension
+## 2. Install the `rotree` CLI (terminal client)
+
+```bash
+# from the repo root
+npm install
+npm run build
+npm install -g ./cli
+```
+
+Verify:
+
+```bash
+rotree version
+rotree help
+```
+
+Then in your Roblox game folder:
+
+```bash
+cd ~/MyRobloxGame
+rotree serve
+```
+
+That's the equivalent of `rojo serve` — leave it running while you work in Studio. Press Ctrl+C to stop.
+
+| Command           | What it does                                                  |
+|-------------------|---------------------------------------------------------------|
+| `rotree serve`    | Start the bridge on `localhost:34872`                         |
+| `rotree build`    | Build `RoTree.rbxm` from `plugin/` (needs Rojo on PATH)       |
+| `rotree init`     | Scaffold a `.rotreeignore` in the current directory           |
+| `rotree context`  | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export   |
+| `rotree compare`  | Print the Rojo ↔ Studio diff                                  |
+
+Use `--port <n>`, `--cwd <dir>`, `--output <dir>` to override defaults.
+
+## 3. Build & install the VS Code extension
 
 ```bash
 cd extension
@@ -61,27 +103,36 @@ code --install-extension rotree-0.1.0.vsix
 
 Or from the VS Code UI: **Extensions panel → ⋯ menu → Install from VSIX...**
 
-## 3. First run
+## 4. First run
 
-1. Open your Roblox game folder (or any folder) in VS Code
+Either:
+
+```bash
+cd ~/MyRobloxGame && rotree serve
+```
+
+or:
+
+1. Open your Roblox game folder in VS Code
 2. Command Palette → **RoTree: Start Bridge**
 3. Status bar shows **🟢 RoTree: 34872**
-4. In Roblox Studio, click **RoTree → Export Game Tree**
-5. You should see `.rotree/` appear in your workspace, populated with JSON + Markdown
+
+Then in Roblox Studio, click **RoTree → Export Game Tree**. You should see `.rotree/` appear in your workspace, populated with JSON + Markdown.
 
 ## Troubleshooting
 
 | Symptom                                          | Fix                                                                 |
 |--------------------------------------------------|---------------------------------------------------------------------|
-| Plugin shows "Bridge offline"                    | Run **RoTree: Start Bridge** in VS Code                             |
+| Plugin shows "Bridge offline"                    | Run `rotree serve` OR **RoTree: Start Bridge** in VS Code           |
 | Plugin shows "HTTP requests are not allowed"     | Enable in Game Settings → Security                                  |
-| Port 34872 is in use                             | Change `rotree.port` in VS Code settings AND in plugin Config       |
+| Port 34872 is in use                             | `rotree serve --port 34900` (or change in VS Code settings) AND in plugin Config |
 | `.rotree/` not created                           | Check VS Code has a workspace folder open                           |
 | Extension says "no workspace folder"             | Open a folder first (File → Open Folder)                            |
 
 ## Updating
 
 - Plugin: rebuild `RoTree.rbxm` and replace the file in your Plugins folder
+- CLI: `npm install -g ./cli` again
 - Extension: rebuild and `code --install-extension` the new `.vsix`
 
 Both ends check version compatibility on connect and warn if they're out of sync.

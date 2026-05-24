@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import { ExportReader } from "./ExportReader";
-import { ScriptEntry } from "../types";
+import { ScriptEntry } from "./types";
 
 interface RojoNode {
   $className?: string;
@@ -53,9 +53,7 @@ export class RojoComparator {
 
     const rojoScripts = await this.collectRojoScripts(project.tree, "");
     const studio = (await this.reader.scripts()) ?? [];
-    const studioMap = new Map<string, ScriptEntry>(
-      studio.map((s) => [s.fullPath, s]),
-    );
+    const studioMap = new Map<string, ScriptEntry>(studio.map((s) => [s.fullPath, s]));
 
     const diff: RojoDiff = {
       onlyInStudio: [],

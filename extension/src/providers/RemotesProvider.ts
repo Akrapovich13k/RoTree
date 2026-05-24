@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
-import { RemoteEntry } from "../types";
+import { ExportReader, RemoteEntry } from "@rotree/core";
 
 class RemoteItem extends vscode.TreeItem {
   constructor(public readonly entry: RemoteEntry) {

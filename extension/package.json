@@ -74,6 +74,9 @@
     "package": "vsce package --no-dependencies",
     "lint": "tsc --noEmit"
   },
+  "dependencies": {
+    "@rotree/core": "*"
+  },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/vscode": "^1.85.0",

@@ -1,8 +1,7 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
-import { ScriptEntry } from "../types";
+import { ExportReader, ScriptEntry } from "@rotree/core";
 
 class ScriptItem extends vscode.TreeItem {
   constructor(public readonly entry: ScriptEntry, sourceFile: string) {

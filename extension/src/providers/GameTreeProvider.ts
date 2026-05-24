@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
-import { TreeNode } from "../types";
+import { ExportReader, TreeNode } from "@rotree/core";
 
 class GameTreeItem extends vscode.TreeItem {
   constructor(public readonly node: TreeNode) {

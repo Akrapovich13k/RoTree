@@ -1,10 +1,12 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { HttpServer } from "../server/HttpServer";
-import { ExportReader } from "../services/ExportReader";
-import { ContextBuilder } from "../services/ContextBuilder";
-import { RojoComparator } from "../services/RojoComparator";
-import { PatchManager } from "../services/PatchManager";
+import {
+  HttpServer,
+  ExportReader,
+  ContextBuilder,
+  RojoComparator,
+  PatchManager,
+} from "@rotree/core";
 
 export interface Refreshable {
   refresh(): void;
@@ -17,6 +19,7 @@ export interface CommandDeps {
   rojo: RojoComparator;
   patches: PatchManager;
   refreshers: Refreshable[];
+  onBridgeStateChanged: (online: boolean, port?: number) => void;
 }
 
 function refreshAll(deps: CommandDeps): void {
@@ -30,10 +33,7 @@ function openFile(folder: string, name: string): Thenable<void> {
   );
 }
 
-export function registerCommands(
-  ctx: vscode.ExtensionContext,
-  deps: CommandDeps,
-): void {
+export function registerCommands(ctx: vscode.ExtensionContext, deps: CommandDeps): void {
   const register = (id: string, fn: (...args: unknown[]) => unknown) => {
     ctx.subscriptions.push(vscode.commands.registerCommand(id, fn));
   };
@@ -42,6 +42,7 @@ export function registerCommands(
     const port = vscode.workspace.getConfiguration("rotree").get<number>("port", 34872);
     try {
       await deps.server.start(port);
+      deps.onBridgeStateChanged(true, port);
       vscode.window.showInformationMessage(`RoTree bridge listening on ${port}.`);
     } catch (err) {
       vscode.window.showErrorMessage(
@@ -52,6 +53,7 @@ export function registerCommands(
 
   register("rotree.stopBridge", async () => {
     await deps.server.stop();
+    deps.onBridgeStateChanged(false);
     vscode.window.showInformationMessage("RoTree bridge stopped.");
   });
 

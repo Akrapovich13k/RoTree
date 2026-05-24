@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
-import { GuiEntry } from "../types";
+import { ExportReader, GuiEntry } from "@rotree/core";
 
 class GuiItem extends vscode.TreeItem {
   constructor(public readonly entry: GuiEntry) {

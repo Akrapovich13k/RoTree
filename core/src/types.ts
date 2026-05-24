@@ -1,5 +1,5 @@
-// Shared types between the plugin and the extension.
-// Mirror the JSON shapes documented in docs/ARCHITECTURE.md.
+// JSON shapes shared between the plugin (Luau) and TypeScript consumers.
+// See docs/ARCHITECTURE.md.
 
 export type ExportKind =
   | "full"
@@ -141,4 +141,13 @@ export interface Patch {
   description?: string;
   critical?: boolean;
   ops: PatchOp[];
+}
+
+export interface LastExportInfo {
+  placeName: string;
+  placeId: number;
+  pluginVersion: string;
+  exportedAt: string;
+  kind: string;
+  stats: ExportStats;
 }

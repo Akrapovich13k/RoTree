@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { ExportReader } from "../services/ExportReader";
+import { ExportReader } from "@rotree/core";
 
 class ContextItem extends vscode.TreeItem {
   constructor(label: string, file: string, icon: string) {

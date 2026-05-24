@@ -1,9 +1,13 @@
 import * as vscode from "vscode";
-import { HttpServer } from "./server/HttpServer";
-import { ExportReader } from "./services/ExportReader";
-import { ContextBuilder } from "./services/ContextBuilder";
-import { RojoComparator } from "./services/RojoComparator";
-import { PatchManager } from "./services/PatchManager";
+import {
+  HttpServer,
+  ExportReader,
+  ContextBuilder,
+  RojoComparator,
+  PatchManager,
+  ExportPayload,
+  BackupPayload,
+} from "@rotree/core";
 import { GameTreeProvider } from "./providers/GameTreeProvider";
 import { ScriptsProvider } from "./providers/ScriptsProvider";
 import { RemotesProvider } from "./providers/RemotesProvider";
@@ -12,19 +16,21 @@ import { ServicesProvider } from "./providers/ServicesProvider";
 import { RojoProvider } from "./providers/RojoProvider";
 import { ContextProvider } from "./providers/ContextProvider";
 import { registerCommands, Refreshable } from "./commands";
-import { ExportPayload, BackupPayload } from "./types";
+
+let statusItem: vscode.StatusBarItem;
 
 export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {
-    vscode.window.showWarningMessage(
-      "RoTree: open a folder before using the extension.",
-    );
+    vscode.window.showWarningMessage("RoTree: open a folder before using the extension.");
     return;
   }
   const root = folder.uri.fsPath;
+  const exportFolderName = vscode.workspace
+    .getConfiguration("rotree")
+    .get<string>("exportFolder", ".rotree");
 
-  const reader = new ExportReader(root);
+  const reader = new ExportReader({ workspaceRoot: root, exportFolderName });
   await reader.ensureFolder();
   const rojo = new RojoComparator(root, reader);
   const context = new ContextBuilder(reader, rojo);
@@ -52,26 +58,60 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     gameTree, scripts, remotes, gui, services, rojoView, contextView,
   ];
 
-  const onExport = async (p: ExportPayload | BackupPayload) => {
-    if (p.kind === "backup") {
-      const backup = p as BackupPayload;
-      await reader.writeBackup(backup);
-      vscode.window.showInformationMessage(`RoTree: backup saved for patch ${backup.patchId}.`);
-      return;
-    }
-    const payload = p as ExportPayload;
-    await reader.writeExport(payload);
-    for (const r of refreshers) r.refresh();
-    vscode.window.showInformationMessage(
-      `RoTree: received ${payload.kind} export of ${payload.placeName}.`,
-    );
-  };
+  statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  statusItem.text = "$(circle-slash) RoTree";
+  statusItem.command = "rotree.startBridge";
+  statusItem.show();
+  ctx.subscriptions.push(statusItem);
 
-  const server = new HttpServer(reader, patches, onExport);
-  ctx.subscriptions.push({ dispose: () => server.dispose() });
+  const server = new HttpServer({
+    reader,
+    patches,
+    onExport: async (p: ExportPayload | BackupPayload) => {
+      if (p.kind === "backup") {
+        const backup = p as BackupPayload;
+        await reader.writeBackup(backup);
+        vscode.window.showInformationMessage(`RoTree: backup saved for patch ${backup.patchId}.`);
+        return;
+      }
+      const payload = p as ExportPayload;
+      await reader.writeExport(payload);
+      for (const r of refreshers) r.refresh();
+      vscode.window.showInformationMessage(
+        `RoTree: received ${payload.kind} export of ${payload.placeName}.`,
+      );
+    },
+    onOpenFolder: async () => {
+      await vscode.commands.executeCommand("rotree.openFolder");
+    },
+    log: (msg, level) => {
+      if (level === "error") console.error(`[RoTree] ${msg}`);
+      else console.log(`[RoTree] ${msg}`);
+    },
+  });
+
+  ctx.subscriptions.push({
+    dispose: () => {
+      void server.stop();
+    },
+  });
 
   registerCommands(ctx, {
-    server, reader, context, rojo, patches, refreshers,
+    server,
+    reader,
+    context,
+    rojo,
+    patches,
+    refreshers,
+    onBridgeStateChanged: (online: boolean, port?: number) => {
+      if (online) {
+        statusItem.text = `$(plug) RoTree: ${port}`;
+        statusItem.command = "rotree.stopBridge";
+      } else {
+        statusItem.text = "$(circle-slash) RoTree";
+        statusItem.command = "rotree.startBridge";
+      }
+    },
   });
 
   const auto = vscode.workspace.getConfiguration("rotree").get<boolean>("autoStartBridge", true);

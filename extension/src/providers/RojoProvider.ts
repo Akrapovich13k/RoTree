@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { RojoComparator, RojoDiff } from "../services/RojoComparator";
+import { RojoComparator, RojoDiff } from "@rotree/core";
 
 class RojoItem extends vscode.TreeItem {
   constructor(label: string, description: string, icon?: string) {
