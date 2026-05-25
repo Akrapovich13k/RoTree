@@ -46,7 +46,13 @@ curl -fsSL https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.s
 irm https://raw.githubusercontent.com/Akrapovich13k/RoTree/main/install.ps1 | iex
 ```
 
-That's it. Requires Node.js 18+. Drops a single `rotree` binary into `~/.local/bin` (or `%LOCALAPPDATA%\rotree\bin` on Windows).
+That's it. Drops `rotree` into `~/.local/bin` (or `%LOCALAPPDATA%\rotree\bin` on Windows).
+
+- **Node.js installed?** → small 290 KB JS bundle, fastest install.
+- **No Node.js?** → standalone binary (~50 MB, no runtime needed).
+
+The installer picks automatically. Force one with
+`ROTREE_MODE=binary curl … | bash` or `ROTREE_MODE=bundle …`.
 
 Then in Roblox Studio you still need to install the plugin once — see [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 

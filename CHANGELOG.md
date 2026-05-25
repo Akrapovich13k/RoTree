@@ -6,6 +6,17 @@ All notable changes to RoTree are listed here. The repo follows
 ## Unreleased (on `main`)
 
 ### Added
+- **Standalone binaries (no Node required at runtime)** — new
+  `.github/workflows/release.yml` builds cross-platform binaries via
+  `bun build --compile` from a single Linux runner. Targets:
+  `rotree-linux-x64`, `rotree-linux-arm64`, `rotree-darwin-x64`,
+  `rotree-darwin-arm64`, `rotree-windows-x64.exe`. Uploaded to the
+  GitHub Release on every `v*` tag push, with `SHA256SUMS.txt`.
+- **Dual-mode installers** — `install.sh` and `install.ps1` now pick
+  automatically: standalone binary if Node isn't installed, JS bundle
+  if Node ≥ 18 is. Force one with `ROTREE_MODE=binary|bundle|auto`.
+  Pin a release with `ROTREE_VERSION=v0.1.0`. The bash installer
+  cross-fades back to the JS bundle when a binary download fails.
 - **`rotree mcp-install` command** — auto-patches the MCP config of
   Claude Desktop AND Claude Code (project `.mcp.json` + user
   `~/.claude.json`) in one call. No more copy-pasting JSON. Idempotent,

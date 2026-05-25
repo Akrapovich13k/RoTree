@@ -53,6 +53,32 @@ Please include:
 - Studio Output log if relevant
 - Any error from `rotree serve` / `rotree mcp` stdout
 
+## Cutting a release
+
+Releases ship five standalone binaries (Linux x64/arm64, macOS Intel/ARM,
+Windows x64) so users who don't want to install Node can grab `rotree`
+directly. The build happens in CI on tag push.
+
+```bash
+# 1. Bump version in core/package.json, cli/package.json,
+#    extension/package.json, plugin/src/Config.luau.
+# 2. Update CHANGELOG.md: move Unreleased entries under the new version.
+# 3. Commit + tag.
+git commit -am "Release v0.2.0"
+git tag v0.2.0
+git push && git push --tags
+```
+
+`.github/workflows/release.yml` then:
+- Installs Node + Bun
+- Builds + bundles
+- `bun build --compile` against five targets
+- Creates a GitHub Release with auto-generated notes, all five binaries,
+  the JS bundle, and `SHA256SUMS.txt`
+
+The one-line installers (`install.sh` / `install.ps1`) start downloading
+the new version on the next user install.
+
 ## Security
 
 If you find a security issue, please **don't** open a public issue — see
