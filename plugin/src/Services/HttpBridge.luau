@@ -7,6 +7,108 @@ local Config = require(script.Parent.Parent.Config)
 
 local HttpBridge = {}
 
+local function sanitizeForJson(value: any, seen: { [any]: boolean }?): any
+	local valueType = typeof(value)
+
+	if valueType == "nil" or valueType == "string" or valueType == "boolean" then
+		return value
+	end
+
+	if valueType == "number" then
+		if value ~= value or value == math.huge or value == -math.huge then
+			return tostring(value)
+		end
+		return value
+	end
+
+	if valueType == "Vector3" then return { x = value.X, y = value.Y, z = value.Z } end
+	if valueType == "Vector2" then return { x = value.X, y = value.Y } end
+	if valueType == "Color3" then return { r = value.R, g = value.G, b = value.B } end
+	if valueType == "BrickColor" then return { name = value.Name, number = value.Number } end
+	if valueType == "UDim" then return { scale = value.Scale, offset = value.Offset } end
+	if valueType == "UDim2" then
+		return {
+			x = { scale = value.X.Scale, offset = value.X.Offset },
+			y = { scale = value.Y.Scale, offset = value.Y.Offset },
+		}
+	end
+	if valueType == "CFrame" then return { components = { value:GetComponents() } } end
+	if valueType == "Vector3int16" then return { x = value.X, y = value.Y, z = value.Z } end
+	if valueType == "Vector2int16" then return { x = value.X, y = value.Y } end
+	if valueType == "Rect" then
+		return {
+			min = { x = value.Min.X, y = value.Min.Y },
+			max = { x = value.Max.X, y = value.Max.Y },
+		}
+	end
+	if valueType == "NumberRange" then return { min = value.Min, max = value.Max } end
+	if valueType == "NumberSequence" then
+		local keypoints = {}
+		for _, keypoint in value.Keypoints do
+			table.insert(keypoints, {
+				time = keypoint.Time,
+				value = keypoint.Value,
+				envelope = keypoint.Envelope,
+			})
+		end
+		return { keypoints = keypoints }
+	end
+	if valueType == "ColorSequence" then
+		local keypoints = {}
+		for _, keypoint in value.Keypoints do
+			table.insert(keypoints, {
+				time = keypoint.Time,
+				value = sanitizeForJson(keypoint.Value, seen),
+			})
+		end
+		return { keypoints = keypoints }
+	end
+	if valueType == "EnumItem" then return value.Name end
+	if valueType == "Instance" then
+		return {
+			_ref = value:GetFullName(),
+			className = value.ClassName,
+		}
+	end
+
+	if valueType == "table" then
+		seen = seen or {}
+		if seen[value] then
+			return "[Circular]"
+		end
+		seen[value] = true
+
+		local isArray = true
+		local maxIndex = 0
+		local count = 0
+		for key in value do
+			if typeof(key) == "number" and key % 1 == 0 and key >= 1 then
+				maxIndex = math.max(maxIndex, key)
+				count += 1
+			else
+				isArray = false
+				break
+			end
+		end
+
+		local output = {}
+		if isArray and maxIndex == count then
+			for index = 1, maxIndex do
+				output[index] = sanitizeForJson(value[index], seen)
+			end
+		else
+			for key, childValue in value do
+				output[tostring(key)] = sanitizeForJson(childValue, seen)
+			end
+		end
+
+		seen[value] = nil
+		return output
+	end
+
+	return tostring(value)
+end
+
 local function headers()
 	return {
 		["Content-Type"] = "application/json",
@@ -26,7 +128,7 @@ local function request(method: string, path: string, body: any?): (boolean, any)
 			Url = url,
 			Method = method,
 			Headers = headers(),
-			Body = if body ~= nil then HttpService:JSONEncode(body) else nil,
+			Body = if body ~= nil then HttpService:JSONEncode(sanitizeForJson(body)) else nil,
 		})
 	end)
 
