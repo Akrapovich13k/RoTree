@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm install
+
+      - name: Type-check all workspaces
+        run: npm run lint --workspaces --if-present
+
+      - name: Build all workspaces
+        run: npm run build
+
+      - name: Bundle CLI
+        run: npm run bundle -w @rotree/cli
+
+      - name: Verify bundled CLI runs
+        run: |
+          node cli/dist/rotree.js version
+          node cli/dist/rotree.js help | head -5
+
+      - name: Bundle size guard (under 1 MB)
+        run: |
+          SIZE=$(stat -c%s cli/dist/rotree.js)
+          echo "bundle size: $SIZE bytes"
+          test "$SIZE" -lt 1048576
