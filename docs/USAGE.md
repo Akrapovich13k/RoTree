@@ -54,6 +54,7 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 ├── summary.md               human-readable export summary
 ├── AI_CONTEXT.md            the file you point your AI at
 ├── last-export-info.json    timestamp, place name, plugin version
+├── output.jsonl             newline-delimited log entries from LogService
 ├── patches/                 incoming patches from your AI / you
 │   └── 2026-05-24-fix-shop.json
 └── backups/
@@ -91,6 +92,8 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 | `rotree_search`       | Substring search across name/path/class. Kind filter optional.    |
 | `rotree_get_context`  | The AI_CONTEXT.md content.                                    |
 | `rotree_get_summary`  | The summary.md content.                                           |
+| `rotree_get_output`   | **Studio Output panel** — recent Print/Info/Warning/Error from LogService. Filter by `level`, `filter`, `limit`, `sinceElapsed`. |
+| `rotree_clear_output` | Wipe the buffered output (bridge side only — does not touch Studio's panel). |
 | `rotree_get_attributes` | Attributes map (optionally filtered by path prefix).            |
 | `rotree_get_tags`     | CollectionService tag map.                                        |
 | `rotree_get_instance` | **Full property bag** for one instance (Position, Color, Material, Text, Source, attributes, tags…). |
