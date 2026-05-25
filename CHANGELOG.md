@@ -5,6 +5,10 @@ All notable changes to RoTree are listed here. The repo follows
 
 ## Unreleased
 
+_(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
+
+## v0.1.1 — 2026-05-25
+
 ### Added
 - **`move` patch op** — the AI can reparent any instance (e.g. drag a
   Part from `Workspace.OldFolder` to `Workspace.NewFolder`). Takes

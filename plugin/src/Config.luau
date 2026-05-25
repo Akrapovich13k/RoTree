@@ -4,7 +4,7 @@
 local Config = {}
 
 Config.PLUGIN_NAME = "RoTree"
-Config.PLUGIN_VERSION = "0.1.0"
+Config.PLUGIN_VERSION = "0.1.1"
 Config.PLUGIN_SUBTITLE = "Roblox Game Tree Bridge"
 
 Config.BRIDGE_HOST = "http://localhost"
