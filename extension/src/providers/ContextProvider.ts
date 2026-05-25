@@ -31,7 +31,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextItem> {
   getChildren(): ContextItem[] {
     const f = this.reader.folder;
     return [
-      new ContextItem("CLAUDE_CONTEXT.md", path.join(f, "CLAUDE_CONTEXT.md"), "book"),
+      new ContextItem("AI_CONTEXT.md", path.join(f, "AI_CONTEXT.md"), "book"),
       new ContextItem("summary.md", path.join(f, "summary.md"), "preview"),
       new ContextItem("game-tree.json", path.join(f, "game-tree.json"), "json"),
       new ContextItem("scripts-map.json", path.join(f, "scripts-map.json"), "json"),

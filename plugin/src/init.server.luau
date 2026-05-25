@@ -88,7 +88,7 @@ local function rebuildWindow()
 		OnGenerateContext = function()
 			-- Re-running a full export regenerates context server-side.
 			local ok, err = ExportService.Run("full", safeMode)
-			notify("RoTree", if ok then "CLAUDE_CONTEXT.md refreshed." else tostring(err))
+			notify("RoTree", if ok then "AI_CONTEXT.md refreshed." else tostring(err))
 		end,
 		OnOpenFolder = function()
 			-- Plugin can't open OS folders. Ask the extension to.

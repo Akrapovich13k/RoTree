@@ -82,7 +82,7 @@ function help(): void {
   console.log("  serve        Start the local bridge for the Roblox Studio plugin.");
   console.log("  mcp          Start the MCP server (for Claude Code, Claude Desktop, ...).");
   console.log("  build        Build the RoTree plugin (.rbxm) via Rojo.");
-  console.log("  context      Regenerate .rotree/CLAUDE_CONTEXT.md from the last export.");
+  console.log("  context      Regenerate .rotree/AI_CONTEXT.md from the last export.");
   console.log("  compare      Diff the Studio export against your default.project.json.");
   console.log("  init         Scaffold a .rotreeignore in the current directory.");
   console.log("  mcp-config   Print a config snippet for Claude Code / Claude Desktop.");

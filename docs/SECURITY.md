@@ -1,6 +1,6 @@
 # RoTree security model
 
-RoTree's job is to give Claude visibility, not authority. This file lists every guarantee and how it's enforced.
+RoTree's job is to give your AI visibility, not authority. This file lists every guarantee and how it's enforced.
 
 ## Guarantees
 
@@ -10,7 +10,7 @@ The plugin only makes HTTP requests to `http://localhost:<port>`. The default po
 
 ### 2. No API keys in the plugin
 
-The plugin never contains any token, key, or credential. Claude integration happens **outside** the plugin — Claude reads files in `.rotree/`, which is your workspace.
+The plugin never contains any token, key, or credential. AI integration happens **outside** the plugin — the AI reads files in `.rotree/`, which is your workspace.
 
 ### 3. No automatic mutation
 
@@ -66,11 +66,11 @@ These do not appear in the export at all unless you opt in:
 - Scripts whose name matches `*_secret*` or `*_private*` (configurable)
 - Attributes prefixed with `_secret_`
 
-Their **paths** still appear in `game-tree.json` (so Claude can reason about structure) but their **source / values** are replaced with `null` and a `"_redacted": true` flag.
+Their **paths** still appear in `game-tree.json` (so your AI can reason about structure) but their **source / values** are replaced with `null` and a `"_redacted": true` flag.
 
 ## What's NOT protected (be aware)
 
-- Your scripts' source code, by default, is exported. If you don't want Claude to see anti-cheat logic, add it to `.rotreeignore`.
+- Your scripts' source code, by default, is exported. If you don't want the AI to see anti-cheat logic, add it to `.rotreeignore`.
 - The HTTP bridge accepts any local process on your machine. If another program on your machine sends a POST to `localhost:34872`, the extension will write the data. Mitigation: the extension validates payload shape and version; in practice, a malicious local process can already do worse things.
 
 ## Auditing the plugin

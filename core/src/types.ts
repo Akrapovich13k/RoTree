@@ -102,7 +102,7 @@ export interface ExportPayload {
   tags?: Record<string, string[]>;
   properties?: Record<string, Record<string, unknown>>;
   stats: ExportStats;
-  claudeContext?: string;
+  aiContext?: string;
 }
 
 export interface ApplyResult {

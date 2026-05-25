@@ -100,7 +100,7 @@ That's the equivalent of `rojo serve` — leave it running while you work in Stu
 | `rotree serve`    | Start the bridge on `localhost:34872`                         |
 | `rotree build`    | Build `RoTree.rbxm` from `plugin/` (needs Rojo on PATH)       |
 | `rotree init`     | Scaffold a `.rotreeignore` in the current directory           |
-| `rotree context`  | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export   |
+| `rotree context`  | Regenerate `.rotree/AI_CONTEXT.md` from the last export   |
 | `rotree compare`  | Print the Rojo ↔ Studio diff                                  |
 
 Use `--port <n>`, `--cwd <dir>`, `--output <dir>` to override defaults.

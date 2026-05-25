@@ -11,7 +11,7 @@ cd ~/MyRobloxGame
 rotree serve
 ```
 
-Leave that running. In Roblox Studio: **RoTree → Export Game Tree**. `.rotree/` populates next to your code. Read `.rotree/CLAUDE_CONTEXT.md` with Claude.
+Leave that running. In Roblox Studio: **RoTree → Export Game Tree**. `.rotree/` populates next to your code. Read `.rotree/AI_CONTEXT.md` with your AI.
 
 ### From VS Code
 
@@ -22,8 +22,8 @@ Leave that running. In Roblox Studio: **RoTree → Export Game Tree**. `.rotree/
 5. Hit **Export Game Tree**.
 6. In VS Code, open the **RoTree** sidebar (the leaf icon).
 7. Browse Game Tree, Scripts, Remotes, GUI.
-8. Open `.rotree/CLAUDE_CONTEXT.md` — that's the file Claude reads.
-9. Ask Claude to analyze, propose changes, or generate patches.
+8. Open `.rotree/AI_CONTEXT.md` — that's the file your AI reads.
+9. Ask your AI to analyze, propose changes, or generate patches.
 
 ## Export modes (from the plugin window)
 
@@ -52,9 +52,9 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 ├── collection-tags.json     { tag: [paths] }
 ├── attributes-map.json      { path: { key: value } }
 ├── summary.md               human-readable export summary
-├── CLAUDE_CONTEXT.md        the file you point Claude at
+├── AI_CONTEXT.md            the file you point your AI at
 ├── last-export-info.json    timestamp, place name, plugin version
-├── patches/                 incoming patches from Claude/you
+├── patches/                 incoming patches from your AI / you
 │   └── 2026-05-24-fix-shop.json
 └── backups/
     └── 2026-05-24-pre-patch-fix-shop.json
@@ -68,7 +68,7 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 | `rotree mcp`        | Run as an MCP server over stdio (for Claude Code, Claude Desktop). |
 | `rotree mcp-config` | Print a config snippet to copy into your MCP client config.     |
 | `rotree build`      | Build `RoTree.rbxm` from `plugin/` via Rojo.                    |
-| `rotree context`    | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export.    |
+| `rotree context`    | Regenerate `.rotree/AI_CONTEXT.md` from the last export.    |
 | `rotree compare`    | Print a Rojo ↔ Studio diff in the terminal.                     |
 | `rotree init`       | Scaffold a `.rotreeignore` in the current directory.            |
 | `rotree version`    | Print version.                                                  |
@@ -76,7 +76,7 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 
 All commands accept `--cwd <dir>`, `--output <dir>`, and (for `serve`) `--port <n>`.
 
-## MCP tools (what Claude can call)
+## MCP tools (what the AI can call)
 
 When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these tools — it pulls only what it needs, no token-burning reads of the whole tree:
 
@@ -89,7 +89,7 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 | `rotree_list_remotes` | All RemoteEvents / RemoteFunctions / Bindables.                   |
 | `rotree_list_gui`     | Top-level ScreenGuis / SurfaceGuis.                               |
 | `rotree_search`       | Substring search across name/path/class. Kind filter optional.    |
-| `rotree_get_context`  | The CLAUDE_CONTEXT.md content.                                    |
+| `rotree_get_context`  | The AI_CONTEXT.md content.                                    |
 | `rotree_get_summary`  | The summary.md content.                                           |
 | `rotree_get_attributes` | Attributes map (optionally filtered by path prefix).            |
 | `rotree_get_tags`     | CollectionService tag map.                                        |
@@ -163,7 +163,7 @@ In the Studio plugin window, toggle **Watch mode** on. From then on:
 - Quiet game = zero CPU, zero exports. Not a timer.
 - Minimum interval between auto-exports: 5 s.
 
-Combine Watch mode + `rotree mcp` and Claude always sees the current state, automatically, without you clicking anything.
+Combine Watch mode + `rotree mcp` and your AI always sees the current state, automatically, without you clicking anything.
 
 ## VS Code commands
 
@@ -176,7 +176,7 @@ Combine Watch mode + `rotree mcp` and Claude always sees the current state, auto
 | `RoTree: Show Script Map`                | Opens `scripts-map.json`                                  |
 | `RoTree: Show Remotes Map`               | Opens `remotes-map.json`                                  |
 | `RoTree: Show GUI Map`                   | Opens `gui-map.json`                                      |
-| `RoTree: Create Claude Context`          | Rewrites `CLAUDE_CONTEXT.md`                              |
+| `RoTree: Create AI Context`          | Rewrites `AI_CONTEXT.md`                              |
 | `RoTree: Compare With Rojo Project`      | Opens a diff against your `default.project.json` sources  |
 | `RoTree: Open Summary`                   | Opens `summary.md`                                        |
 | `RoTree: Open Export Folder`             | Reveals `.rotree/` in OS file manager                     |
@@ -200,15 +200,15 @@ Workspace.Hidden.SuperSecretCommand
 
 The plugin asks VS Code for this list on each export (via `GET /rotree/ignore`).
 
-## Using the export with Claude
+## Using the export with your AI
 
-Open `.rotree/CLAUDE_CONTEXT.md` in your Claude Code session, or just say:
+Open `.rotree/AI_CONTEXT.md` in your AI agent (Claude Code, Codex, Cursor, etc.), or just say:
 
-> "Read `.rotree/CLAUDE_CONTEXT.md` and `.rotree/game-tree.json`. I want to add a new shop tab. Propose a plan, don't write any code yet."
+> "Read `.rotree/AI_CONTEXT.md` and `.rotree/game-tree.json`. I want to add a new shop tab. Propose a plan, don't write any code yet."
 
-Claude can read every file under `.rotree/` because it's just JSON and Markdown.
+your AI can read every file under `.rotree/` because it's just JSON and Markdown.
 
-When Claude proposes a patch, ask:
+When the AI proposes a patch, ask:
 
 > "Write the patch into `.rotree/patches/add-shop-tab.json` using the RoTree patch schema."
 

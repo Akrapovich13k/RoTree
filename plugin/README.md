@@ -32,7 +32,7 @@ src/
 │   ├── HttpBridge.luau        SOLE network point
 │   ├── PatchService.luau      SOLE mutation point
 │   ├── BackupService.luau     Snapshots before patches
-│   └── ContextGenerator.luau  Builds CLAUDE_CONTEXT.md
+│   └── ContextGenerator.luau  Builds AI_CONTEXT.md
 └── Utils/
     ├── PathUtils.luau
     └── Ignore.luau

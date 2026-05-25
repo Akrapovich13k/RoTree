@@ -10,7 +10,7 @@ Node's standard library.
 import {
   HttpServer,        // loopback HTTP listener for the Roblox plugin
   ExportReader,      // reads & writes .rotree/*
-  ContextBuilder,    // builds CLAUDE_CONTEXT.md
+  ContextBuilder,    // builds AI_CONTEXT.md
   RojoComparator,    // diffs Studio export vs default.project.json
   PatchManager,      // lists/reads/writes patches
   ROTREE_VERSION,

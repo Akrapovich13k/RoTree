@@ -29,7 +29,7 @@ src/
 ├── server/HttpServer.ts         loopback HTTP listener
 ├── services/
 │   ├── ExportReader.ts          read .rotree/* on demand
-│   ├── ContextBuilder.ts        regenerate CLAUDE_CONTEXT.md
+│   ├── ContextBuilder.ts        regenerate AI_CONTEXT.md
 │   ├── RojoComparator.ts        compare with default.project.json
 │   └── PatchManager.ts          list / read patches
 ├── providers/                   sidebar TreeDataProviders

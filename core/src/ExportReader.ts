@@ -80,10 +80,10 @@ export class ExportReader {
     };
     await this.writeJson("last-export-info.json", info);
 
-    if (p.claudeContext) {
+    if (p.aiContext) {
       await fs.writeFile(
-        path.join(this.folder, "CLAUDE_CONTEXT.md"),
-        p.claudeContext,
+        path.join(this.folder, "AI_CONTEXT.md"),
+        p.aiContext,
         "utf8",
       );
     }

@@ -170,7 +170,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 		tags = tags,
 		properties = properties,
 		stats = stats,
-		claudeContext = contextMd,
+		aiContext = contextMd,
 	}
 
 	local ok, err = HttpBridge.SendExport(payload)

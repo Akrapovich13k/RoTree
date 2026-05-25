@@ -44,11 +44,11 @@ RoTree is two programs talking over a localhost HTTP connection.
 │  ┌──────────────────────────────────────┐  │ │
 │  │ Sidebar (TreeDataProviders)          │  │ │
 │  │ Game Tree · Scripts · Remotes · GUI  │  │ │
-│  │ Services · Rojo · Claude Context     │  │ │
+│  │ Services · Rojo · AI Context     │  │ │
 │  └──────────────────────────────────────┘  │ │
 │         ▼                                  │ │
 │  ┌──────────────┐                          │ │
-│  │ ContextBuilder │── writes CLAUDE_CONTEXT.md
+│  │ ContextBuilder │── writes AI_CONTEXT.md
 │  └──────────────┘                          │ │
 └──────────────────────────────────────────────┘
 ```
@@ -88,7 +88,7 @@ X-RoTree-Version: 0.1.0
 The server splits this payload into the files documented in [`docs/USAGE.md`](USAGE.md).
 
 For patches, the reverse flow is:
-1. VS Code (or Claude via VS Code) writes `.rotree/patches/<id>.json`
+1. VS Code (or your AI via VS Code) writes `.rotree/patches/<id>.json`
 2. The plugin's "Apply Patch" button does `GET http://localhost:34872/rotree/patches/<id>`
 3. Studio shows a preview, asks confirmation, creates a backup, applies.
 
@@ -103,7 +103,7 @@ For patches, the reverse flow is:
 | `plugin/src/Services/PatchService`  | Plugin      | The single mutation point (gated)                |
 | `core/src/HttpServer.ts`            | Core (TS)   | Receives export, validates, writes               |
 | `core/src/ExportReader.ts`          | Core (TS)   | Splits payload to `.rotree/*` files              |
-| `core/src/ContextBuilder.ts`        | Core (TS)   | Builds `CLAUDE_CONTEXT.md`                       |
+| `core/src/ContextBuilder.ts`        | Core (TS)   | Builds `AI_CONTEXT.md`                       |
 | `core/src/RojoComparator.ts`        | Core (TS)   | Diffs Studio export vs `default.project.json`    |
 | `core/src/PatchManager.ts`          | Core (TS)   | Patch file IO                                    |
 | `cli/src/index.ts`                  | CLI         | `rotree` binary — wraps core for terminal use    |
@@ -152,7 +152,7 @@ The CLI and the extension are **thin shells** over `@rotree/core`. Same behavior
 | `types.ts`                          | Shared TS interfaces matching the JSON payload     |
 | `server/HttpServer.ts`              | Listens on 34872, splits payload to files          |
 | `services/ExportReader.ts`          | Loads files from `.rotree/` on demand              |
-| `services/ContextBuilder.ts`        | Builds `CLAUDE_CONTEXT.md`                         |
+| `services/ContextBuilder.ts`        | Builds `AI_CONTEXT.md`                         |
 | `services/RojoComparator.ts`        | Reads `default.project.json`, diffs vs export      |
 | `services/PatchManager.ts`          | Writes patches to `.rotree/patches/`               |
 | `providers/*Provider.ts`            | `vscode.TreeDataProvider` for each sidebar section |
@@ -172,7 +172,7 @@ The CLI and the extension are **thin shells** over `@rotree/core`. Same behavior
 - Apple-like UI, light + dark
 - HTTP bridge
 - VS Code sidebar with all sections
-- `CLAUDE_CONTEXT.md` generation
+- `AI_CONTEXT.md` generation
 - Rojo comparison
 - Patch preview + apply with backup
 - `.rotreeignore`

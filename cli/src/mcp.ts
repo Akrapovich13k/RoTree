@@ -113,7 +113,7 @@ const TOOLS = [
   {
     name: "rotree_get_context",
     description:
-      "Return the contents of CLAUDE_CONTEXT.md — a Markdown overview of the game. Cheap, ~5-15 KB.",
+      "Return the contents of AI_CONTEXT.md — a Markdown overview of the game. Cheap, ~5-15 KB.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -340,7 +340,7 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
     resources: [
-      { uri: "rotree://context", name: "Claude Context", mimeType: "text/markdown" },
+      { uri: "rotree://context", name: "AI Context", mimeType: "text/markdown" },
       { uri: "rotree://summary", name: "Export Summary", mimeType: "text/markdown" },
       { uri: "rotree://tree", name: "Game Tree", mimeType: "application/json" },
       { uri: "rotree://scripts", name: "Scripts Map", mimeType: "application/json" },
@@ -355,7 +355,7 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
   server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
     const uri = req.params.uri;
     const map: Record<string, string> = {
-      "rotree://context": "CLAUDE_CONTEXT.md",
+      "rotree://context": "AI_CONTEXT.md",
       "rotree://summary": "summary.md",
       "rotree://tree": "game-tree.json",
       "rotree://scripts": "scripts-map.json",
@@ -507,7 +507,7 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
         }
 
         case "rotree_get_context": {
-          const file = path.join(reader.folder, "CLAUDE_CONTEXT.md");
+          const file = path.join(reader.folder, "AI_CONTEXT.md");
           const text = await fs.readFile(file, "utf8").catch(() => "");
           if (!text) {
             const built = await context.build();

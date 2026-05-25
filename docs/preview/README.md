@@ -17,7 +17,7 @@ Open one of these URLs in Safari:
 ## What's inside
 
 - The full plugin window: header, all cards (Bridge / Exports / Last export
-  / Claude Context / Rojo / Patch Safety / Appearance), footer.
+  / AI Context / Rojo / Patch Safety / Appearance), footer.
 - Working light & dark mode (tap the pill at the top OR the in-widget toggle).
 - Working toggle switches (Watch mode, Safe Mode, Auto-apply, Dark mode).
 - Mobile-safe layout (viewport meta, safe-area-inset padding for iPhone notch).

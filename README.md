@@ -1,6 +1,6 @@
 # RoTree
 
-**Roblox Game Tree Bridge** — a local, secure bridge between Roblox Studio and VS Code so Claude can understand your entire game without ever modifying it without your confirmation.
+**Roblox Game Tree Bridge** — a local, secure bridge between Roblox Studio and VS Code so your AI can understand your entire game without ever modifying it without your confirmation.
 
 ```
 ┌─────────────────────────┐        HTTP POST          ┌──────────────────────────┐
@@ -16,11 +16,11 @@
 
 - Scans your full Roblox game tree (Workspace, ReplicatedStorage, ServerScriptService, GUI, Remotes, Tools, etc.)
 - Exports everything to a local `.rotree/` folder as readable JSON + Markdown
-- Generates a `CLAUDE_CONTEXT.md` so Claude understands your architecture
-- **MCP server** (`rotree mcp`): exposes the tree as tools so Claude Code / Claude Desktop / any MCP client can pull only what it needs (no token waste)
+- Generates a `AI_CONTEXT.md` so your AI understands your architecture
+- **MCP server** (`rotree mcp`): exposes the tree as tools so Claude Code / Claude Desktop / any MCP client / any MCP client can pull only what it needs (no token waste)
 - **Watch mode** in the Studio plugin: re-exports automatically when the DataModel changes (event-driven + debounced, never on a timer)
 - Compares Studio state with your Rojo project (if any)
-- Lets Claude propose patches that **you** review and apply manually
+- Lets your AI propose patches that **you** review and apply manually
 
 ## What it never does
 
@@ -55,12 +55,12 @@ rotree serve         # listens on http://localhost:34872
 
 In Roblox Studio: turn on **Watch mode** in the RoTree window. Now every change in your DataModel auto-exports — no clicking.
 
-**Hooking Claude Code / Claude Desktop (MCP):**
+**Hooking Claude Code / Claude Desktop / any MCP client (MCP):**
 ```bash
 rotree mcp-config --cwd ~/MyRobloxGame
 ```
 
-Copy the printed JSON into your MCP config. Claude now has tools like `rotree_get_script("ServerScriptService.Shop")` and `rotree_search("leaderstats")`. It pulls only what it needs.
+Copy the printed JSON into your MCP config. your AI now has tools like `rotree_get_script("ServerScriptService.Shop")` and `rotree_search("leaderstats")`. It pulls only what it needs.
 
 **From VS Code:**
 ```
@@ -71,7 +71,7 @@ Command Palette → RoTree: Start Bridge
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the bridge is built
 - [`docs/INSTALLATION.md`](docs/INSTALLATION.md) — step-by-step install
-- [`docs/USAGE.md`](docs/USAGE.md) — daily workflow with Claude
+- [`docs/USAGE.md`](docs/USAGE.md) — daily workflow with your AI
 - [`docs/SECURITY.md`](docs/SECURITY.md) — what's protected and why
 
 ## Project layout

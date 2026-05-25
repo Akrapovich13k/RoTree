@@ -123,10 +123,10 @@ function MainWindow.Build(parent: PluginGui, api: Api)
 	local s5 = Components.StatLine(statsCard, "Parts", "0")
 	local s6 = Components.StatLine(statsCard, "ModuleScripts", "0")
 
-	-- Claude Context card
-	local ctx = Components.Card(scroll, "Claude Context", "Generate the file Claude reads")
+	-- AI Context card
+	local ctx = Components.Card(scroll, "AI Context", "Generate the file your AI reads")
 	ctx.LayoutOrder = 5
-	Components.Button(ctx, "Generate Claude Context", "ghost", api.OnGenerateContext)
+	Components.Button(ctx, "Generate AI Context", "ghost", api.OnGenerateContext)
 	Components.Button(ctx, "Open Export Folder", "ghost", api.OnOpenFolder)
 
 	-- Rojo card

@@ -19,7 +19,7 @@ Now `rotree` is on your PATH.
 ```
 rotree serve              Start the local bridge for the Studio plugin
 rotree build              Build plugin/RoTree.rbxm via Rojo
-rotree context            Regenerate .rotree/CLAUDE_CONTEXT.md
+rotree context            Regenerate .rotree/AI_CONTEXT.md
 rotree compare            Diff Studio export ↔ default.project.json
 rotree init               Scaffold a .rotreeignore
 rotree version            Print the version
