@@ -1,24 +1,42 @@
 name: Release
 
-# Triggered when you push a tag like v0.1.0. Builds standalone binaries
-# for Linux/macOS/Windows (no Node required at runtime) and uploads them
-# to the GitHub Release. The one-line install.sh / install.ps1 fetches
-# these binaries when Node isn't available on the user's machine.
+# Triggered EITHER by a tag push (git push origin v0.1.0) or manually
+# from the Actions tab → Release → Run workflow → type "v0.1.0".
+# Both paths build the same artifacts and upload them to a release
+# named after the chosen tag (action-gh-release creates the tag if it
+# doesn't exist yet).
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag to release (e.g. v0.1.0). Created on the current branch if it doesn't exist."
+        required: true
+        default: "v0.1.0"
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build standalone binaries
+    name: Build standalone binaries + Roblox plugin
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.version }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "name=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Releasing as: ${TAG}"
 
       - uses: actions/setup-node@v4
         with:
@@ -79,6 +97,8 @@ jobs:
       - name: Create release + upload binaries
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: RoTree ${{ steps.tag.outputs.name }}
           generate_release_notes: true
           files: |
             dist/rotree-linux-x64
