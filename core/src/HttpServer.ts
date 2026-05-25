@@ -1,5 +1,16 @@
 import * as http from "http";
-import { ExportPayload, BackupPayload, Patch, ApplyResult } from "./types";
+import * as path from "path";
+import * as fs from "fs/promises";
+import {
+  ExportPayload,
+  BackupPayload,
+  Patch,
+  ApplyResult,
+  LogEntry,
+  LogLevel,
+  LogPayload,
+  OutputQuery,
+} from "./types";
 import { ExportReader } from "./ExportReader";
 import { PatchManager } from "./PatchManager";
 
@@ -26,6 +37,9 @@ interface QueuedPatch {
   resolved: boolean;
 }
 
+const MAX_LOG_RING = 10000;
+const MAX_LOG_FILE_BYTES = 5 * 1024 * 1024; // 5 MB rotation threshold
+
 export class HttpServer {
   private server?: http.Server;
   private readonly log: LogHandler;
@@ -34,8 +48,58 @@ export class HttpServer {
   private readonly autoApplyPending = new Map<string, QueuedPatch>();
   private autoApplyOnlineAt = 0;
 
+  private readonly logRing: LogEntry[] = [];
+  private logFileWriting = false;
+
   constructor(private readonly opts: HttpServerOptions) {
     this.log = opts.log ?? (() => {});
+  }
+
+  getOutput(query: OutputQuery = {}): LogEntry[] {
+    let out: LogEntry[] = this.logRing;
+    if (query.level) out = out.filter((e) => e.level === query.level);
+    if (query.filter) {
+      const f = query.filter.toLowerCase();
+      out = out.filter((e) => e.text.toLowerCase().includes(f));
+    }
+    if (query.sinceElapsed !== undefined) {
+      const min = query.sinceElapsed;
+      out = out.filter((e) => e.elapsed >= min);
+    }
+    const limit = query.limit ?? 200;
+    if (out.length > limit) out = out.slice(-limit);
+    return out;
+  }
+
+  clearOutput(): void {
+    this.logRing.length = 0;
+  }
+
+  private async appendLogEntries(entries: LogEntry[]): Promise<void> {
+    for (const e of entries) {
+      this.logRing.push(e);
+      if (this.logRing.length > MAX_LOG_RING) this.logRing.shift();
+    }
+    if (this.logFileWriting) return; // skip duplicate concurrent writes
+    this.logFileWriting = true;
+    try {
+      const file = path.join(this.opts.reader.folder, "output.jsonl");
+      await this.opts.reader.ensureFolder();
+      try {
+        const stat = await fs.stat(file);
+        if (stat.size > MAX_LOG_FILE_BYTES) {
+          await fs.rename(file, file + ".prev").catch(() => {});
+        }
+      } catch {
+        // file may not exist yet
+      }
+      const lines = entries.map((e) => JSON.stringify(e)).join("\n") + "\n";
+      await fs.appendFile(file, lines, "utf8");
+    } catch (err) {
+      this.log(`log persist failed: ${(err as Error).message}`, "warn");
+    } finally {
+      this.logFileWriting = false;
+    }
   }
 
   get listening(): boolean {
@@ -187,6 +251,33 @@ export class HttpServer {
           this.autoApplyPending.delete(parsed.id);
           entry.resolver(parsed);
         }
+        this.send(res, 200, { ok: true });
+        return;
+      }
+
+      if (method === "POST" && url === "/rotree/log") {
+        const body = await this.readBody(req);
+        const parsed = JSON.parse(body) as LogPayload;
+        if (parsed && Array.isArray(parsed.entries) && parsed.entries.length > 0) {
+          await this.appendLogEntries(parsed.entries);
+        }
+        this.send(res, 200, { ok: true, stored: parsed?.entries?.length ?? 0 });
+        return;
+      }
+
+      if (method === "GET" && url.startsWith("/rotree/log/recent")) {
+        const q = new URL(url, "http://localhost").searchParams;
+        const limit = q.get("limit") ? parseInt(q.get("limit") as string, 10) : undefined;
+        const level = (q.get("level") as LogLevel) || undefined;
+        const filter = q.get("filter") || undefined;
+        const sinceElapsed = q.get("sinceElapsed") ? parseFloat(q.get("sinceElapsed") as string) : undefined;
+        const entries = this.getOutput({ limit, level, filter, sinceElapsed });
+        this.send(res, 200, { entries });
+        return;
+      }
+
+      if (method === "POST" && url === "/rotree/log/clear") {
+        this.clearOutput();
         this.send(res, 200, { ok: true });
         return;
       }

@@ -1,4 +1,5 @@
 export * from "./types";
+export type { OutputQuery } from "./types";
 export { ExportReader, ExportReaderOptions } from "./ExportReader";
 export {
   HttpServer,

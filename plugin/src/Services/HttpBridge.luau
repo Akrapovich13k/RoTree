@@ -85,4 +85,10 @@ function HttpBridge.ReportApplyResult(result: { id: string, success: boolean, ap
 	return ok
 end
 
+function HttpBridge.SendLog(entries: { any }): boolean
+	if #entries == 0 then return true end
+	local ok = request("POST", "/rotree/log", { entries = entries })
+	return ok
+end
+
 return HttpBridge

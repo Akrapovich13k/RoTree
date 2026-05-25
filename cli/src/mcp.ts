@@ -142,6 +142,47 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
+    name: "rotree_get_output",
+    description:
+      "Read Roblox Studio's Output panel — Print / Info / Warning / Error messages from LogService. " +
+      "Streamed live from the plugin while it's loaded. Great for debugging after applying a patch " +
+      "(check for new errors), inspecting a script's print() statements, or watching for warnings. " +
+      "Lightweight — returns the most recent entries only. " +
+      "Persisted to .rotree/output.jsonl for history.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 2000,
+          default: 200,
+          description: "Max entries to return (newest first). Default 200.",
+        },
+        level: {
+          type: "string",
+          enum: ["Print", "Info", "Warning", "Error"],
+          description: "Filter to one severity. Omit for everything.",
+        },
+        filter: {
+          type: "string",
+          description: "Case-insensitive substring filter on the message text.",
+        },
+        sinceElapsed: {
+          type: "number",
+          description: "Only entries whose `elapsed` (seconds since plugin load) is ≥ this value. Use to read what happened AFTER a known point.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "rotree_clear_output",
+    description:
+      "Clear the buffered Studio Output on the bridge side. Useful to start a fresh debug session before re-running something. Does NOT clear Studio's actual Output panel.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
     name: "rotree_get_instance",
     description:
       "Return ALL captured properties for a single instance: tree node info, attributes, and the full property bag (Position, Size, Color, Material, Text, Source, etc.). Use this when you need to know every property of one specific object.",
@@ -547,6 +588,36 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
           const diff = await rojo.compare();
           if (!diff) return textResult("could not parse Rojo project");
           return jsonResult(diff);
+        }
+
+        case "rotree_get_output": {
+          if (!httpServer) {
+            return textResult(
+              "Output stream not available — `rotree mcp` was started with --no-serve. Run `rotree serve` in another terminal to capture logs from the Studio plugin.",
+            );
+          }
+          const limit = typeof args.limit === "number" ? args.limit : undefined;
+          const level = typeof args.level === "string" ? (args.level as "Print" | "Info" | "Warning" | "Error") : undefined;
+          const filter = typeof args.filter === "string" ? args.filter : undefined;
+          const sinceElapsed = typeof args.sinceElapsed === "number" ? args.sinceElapsed : undefined;
+          const entries = httpServer.getOutput({ limit, level, filter, sinceElapsed });
+          if (entries.length === 0) {
+            return textResult(
+              "No log entries match. Either nothing was printed yet, or the plugin isn't connected (check that the RoTree plugin is open in Studio and HTTP requests are allowed).",
+            );
+          }
+          return jsonResult({
+            count: entries.length,
+            entries,
+          });
+        }
+
+        case "rotree_clear_output": {
+          if (!httpServer) {
+            return textResult("Output stream not available (no bridge running).");
+          }
+          httpServer.clearOutput();
+          return textResult("Output buffer cleared.");
         }
 
         case "rotree_get_instance": {

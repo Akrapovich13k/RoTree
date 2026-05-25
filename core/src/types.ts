@@ -113,6 +113,26 @@ export interface ApplyResult {
   error?: string;
 }
 
+export type LogLevel = "Print" | "Info" | "Warning" | "Error";
+
+export interface LogEntry {
+  time: string;
+  elapsed: number;
+  level: LogLevel;
+  text: string;
+}
+
+export interface LogPayload {
+  entries: LogEntry[];
+}
+
+export interface OutputQuery {
+  limit?: number;
+  level?: LogLevel;
+  filter?: string;
+  sinceElapsed?: number;
+}
+
 export interface BackupSnapshot {
   path: string;
   className: string;

@@ -10,6 +10,11 @@ local ExportService = require(script.Services.ExportService)
 local HttpBridge = require(script.Services.HttpBridge)
 local PatchService = require(script.Services.PatchService)
 local WatchService = require(script.Services.WatchService)
+local OutputStream = require(script.Services.OutputStream)
+
+-- Stream Studio's Output panel to the bridge from the moment the plugin
+-- loads. Cheap, always-on; the AI can pull recent logs on demand.
+OutputStream.Enable()
 
 local toolbar = plugin:CreateToolbar(Config.PLUGIN_NAME)
 local button = toolbar:CreateButton(
@@ -215,5 +220,6 @@ end)
 
 plugin.Unloading:Connect(function()
 	WatchService.Disable()
+	OutputStream.Disable()
 	autoApplyOn = false
 end)

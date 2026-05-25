@@ -1,0 +1,91 @@
+name: Release
+
+# Triggered when you push a tag like v0.1.0. Builds standalone binaries
+# for Linux/macOS/Windows (no Node required at runtime) and uploads them
+# to the GitHub Release. The one-line install.sh / install.ps1 fetches
+# these binaries when Node isn't available on the user's machine.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build standalone binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Rojo (for the Roblox plugin build)
+        run: |
+          set -euxo pipefail
+          ROJO_VERSION=7.4.4
+          curl -fsSL "https://github.com/rojo-rbx/rojo/releases/download/v${ROJO_VERSION}/rojo-${ROJO_VERSION}-linux-x86_64.zip" -o /tmp/rojo.zip
+          unzip -o /tmp/rojo.zip -d /tmp/rojo
+          sudo install /tmp/rojo/rojo /usr/local/bin/rojo
+          rojo --version
+
+      - name: Install
+        run: npm install
+
+      - name: Build all workspaces
+        run: npm run build
+
+      - name: Bundle CLI (single JS file)
+        run: npm run bundle -w @rotree/cli
+
+      - name: Build Roblox plugin (RoTree.rbxm)
+        run: |
+          set -euxo pipefail
+          cd plugin
+          rojo build default.project.json -o RoTree.rbxm
+          ls -lh RoTree.rbxm
+
+      - name: Compile standalone binaries (Bun)
+        run: |
+          set -euxo pipefail
+          mkdir -p dist
+          bun build cli/dist/rotree.js --compile --target=bun-linux-x64    --outfile dist/rotree-linux-x64
+          bun build cli/dist/rotree.js --compile --target=bun-linux-arm64  --outfile dist/rotree-linux-arm64
+          bun build cli/dist/rotree.js --compile --target=bun-darwin-x64   --outfile dist/rotree-darwin-x64
+          bun build cli/dist/rotree.js --compile --target=bun-darwin-arm64 --outfile dist/rotree-darwin-arm64
+          bun build cli/dist/rotree.js --compile --target=bun-windows-x64  --outfile dist/rotree-windows-x64.exe
+          ls -lh dist/
+
+      - name: Smoke-test the Linux binary
+        run: |
+          chmod +x dist/rotree-linux-x64
+          ./dist/rotree-linux-x64 version
+
+      - name: SHA256 checksums
+        run: |
+          cd dist
+          sha256sum rotree-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create release + upload binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/rotree-linux-x64
+            dist/rotree-linux-arm64
+            dist/rotree-darwin-x64
+            dist/rotree-darwin-arm64
+            dist/rotree-windows-x64.exe
+            dist/SHA256SUMS.txt
+            cli/dist/rotree.js
+            plugin/RoTree.rbxm
