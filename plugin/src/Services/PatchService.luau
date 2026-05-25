@@ -137,6 +137,27 @@ local function applyOp(op: PatchOp): (boolean, string?)
 		inst.Name = op.name
 		return true, nil
 
+	elseif op.op == "move" then
+		if not op.path or not op.parentPath then return false, "move requires path + parentPath" end
+		local inst = PathUtils.Resolve(op.path)
+		if not inst then return false, "Instance not found: " .. op.path end
+		local parent = PathUtils.Resolve(op.parentPath)
+		if not parent then return false, "Parent not found: " .. op.parentPath end
+		-- Refuse self-parenting / circular moves
+		if inst == parent then return false, "Cannot move an instance into itself" end
+		local cur = parent
+		while cur do
+			if cur == inst then
+				return false, string.format("Cannot move %s into one of its own descendants (%s)", op.path, op.parentPath)
+			end
+			cur = cur.Parent
+		end
+		local ok, err = pcall(function() inst.Parent = parent end)
+		if not ok then return false, "Failed to move: " .. tostring(err) end
+		-- Optional concurrent rename in the same op so the AI doesn't need two passes
+		if op.name then inst.Name = op.name end
+		return true, nil
+
 	elseif op.op == "delete" then
 		if not op.path then return false, "delete requires path" end
 		local inst = PathUtils.Resolve(op.path)

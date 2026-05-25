@@ -5,7 +5,13 @@ All notable changes to RoTree are listed here. The repo follows
 
 ## Unreleased
 
-_(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
+### Added
+- **`move` patch op** — the AI can reparent any instance (e.g. drag a
+  Part from `Workspace.OldFolder` to `Workspace.NewFolder`). Takes
+  `path` + `parentPath`, plus an optional `name` to rename in the same
+  op. Refuses circular moves (moving an instance into one of its own
+  descendants). Now in both `rotree_write_patch` and
+  `rotree_apply_patch` schemas.
 
 ## v0.1.0 — 2026-05-25
 

@@ -156,6 +156,7 @@ export interface PatchOp {
     | "createScript"
     | "createInstance"
     | "rename"
+    | "move"
     | "delete";
   path?: string;
   parentPath?: string;

@@ -114,6 +114,7 @@ When the AI calls `rotree_write_patch` or `rotree_apply_patch`, each operation i
 | `createScript`   | `parentPath`, `name`, `className`        | `source`      | Shortcut for `Script` / `LocalScript` / `ModuleScript` |
 | `createFolder`   | `parentPath`, `name`                     |               | Create a Folder                                    |
 | `rename`         | `path`, `name`                           |               | Rename an instance                                 |
+| `move`           | `path`, `parentPath`                     | `name`        | Reparent an instance (folder → folder, etc.). `name` lets you rename in the same op. Circular moves refused. |
 | `delete`         | `path`                                   |               | Destroy an instance                                |
 
 ### Property value shapes

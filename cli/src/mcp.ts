@@ -225,7 +225,7 @@ const TOOLS = [
             properties: {
               op: {
                 type: "string",
-                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "delete"],
+                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "move", "delete"],
               },
               path: { type: "string" },
               parentPath: { type: "string" },
@@ -254,6 +254,7 @@ const TOOLS = [
       "  - createScript: shortcut for Script/LocalScript/ModuleScript (needs parentPath, name, className; optional source)\n" +
       "  - createFolder: create a Folder (needs parentPath, name)\n" +
       "  - rename: rename an instance (needs path, name)\n" +
+      "  - move: reparent an instance (needs path, parentPath; optional name to also rename in the same op). Refuses circular moves.\n" +
       "  - delete: destroy an instance (needs path)\n" +
       "Properties must be passed in the same JSON shapes that PropertyScanner emits: Vector3 = {x,y,z}, Color3 = {r,g,b}, UDim2 = {x:{scale,offset}, y:{scale,offset}}, CFrame = {components:[12 nums]}, enums = plain string or {__enum, value}. Arrays of 3 numbers are accepted as Vector3 (or Color3 if all in [0,1]). " +
       "Critical patches (DataStore, leaderstats, MarketplaceService, anti-cheat, >20 deletes) are always refused — those must go through `rotree_write_patch` for manual review. " +
@@ -273,7 +274,7 @@ const TOOLS = [
             properties: {
               op: {
                 type: "string",
-                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "delete"],
+                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "move", "delete"],
               },
               path: { type: "string" },
               parentPath: { type: "string" },
