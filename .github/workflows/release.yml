@@ -29,6 +29,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install Rojo (for the Roblox plugin build)
+        run: |
+          set -euxo pipefail
+          ROJO_VERSION=7.4.4
+          curl -fsSL "https://github.com/rojo-rbx/rojo/releases/download/v${ROJO_VERSION}/rojo-${ROJO_VERSION}-linux-x86_64.zip" -o /tmp/rojo.zip
+          unzip -o /tmp/rojo.zip -d /tmp/rojo
+          sudo install /tmp/rojo/rojo /usr/local/bin/rojo
+          rojo --version
+
       - name: Install
         run: npm install
 
@@ -37,6 +46,13 @@ jobs:
 
       - name: Bundle CLI (single JS file)
         run: npm run bundle -w @rotree/cli
+
+      - name: Build Roblox plugin (RoTree.rbxm)
+        run: |
+          set -euxo pipefail
+          cd plugin
+          rojo build default.project.json -o RoTree.rbxm
+          ls -lh RoTree.rbxm
 
       - name: Compile standalone binaries (Bun)
         run: |
@@ -72,3 +88,4 @@ jobs:
             dist/rotree-windows-x64.exe
             dist/SHA256SUMS.txt
             cli/dist/rotree.js
+            plugin/RoTree.rbxm

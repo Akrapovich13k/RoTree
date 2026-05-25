@@ -3,7 +3,17 @@
 All notable changes to RoTree are listed here. The repo follows
 [Semantic Versioning](https://semver.org).
 
-## Unreleased (on `main`)
+## Unreleased
+
+_(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
+
+## v0.1.0 — 2026-05-25
+
+First public release. Ships:
+
+- Standalone binaries for Linux x64/ARM, macOS Intel/ARM, Windows x64.
+- JS bundle (290 KB) for users who already have Node 18+.
+- Roblox Studio plugin `RoTree.rbxm` (drop into your Plugins folder).
 
 ### Added
 - **Standalone binaries (no Node required at runtime)** — new
