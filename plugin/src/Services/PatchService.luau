@@ -9,6 +9,7 @@ local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Config = require(script.Parent.Parent.Config)
 local PathUtils = require(script.Parent.Parent.Utils.PathUtils)
 local BackupService = require(script.Parent.BackupService)
+local PropertyDeserializer = require(script.Parent.PropertyDeserializer)
 
 local PatchService = {}
 
@@ -70,7 +71,8 @@ local function applyOp(op: PatchOp): (boolean, string?)
 		if not op.path or not op.props then return false, "setProperties requires path + props" end
 		local inst = PathUtils.Resolve(op.path)
 		if not inst then return false, "Instance not found: " .. op.path end
-		for k, v in op.props do
+		local props = PropertyDeserializer.ConvertProps(op.props)
+		for k, v in props do
 			local ok, err = pcall(function() (inst :: any)[k] = v end)
 			if not ok then return false, string.format("Failed to set %s: %s", k, tostring(err)) end
 		end
@@ -98,6 +100,34 @@ local function applyOp(op: PatchOp): (boolean, string?)
 		s.Name = op.name
 		if op.source then (s :: any).Source = op.source end
 		s.Parent = parent
+		return true, nil
+
+	elseif op.op == "createInstance" then
+		if not op.parentPath or not op.className then
+			return false, "createInstance requires parentPath + className"
+		end
+		local parent = PathUtils.Resolve(op.parentPath)
+		if not parent then return false, "Parent not found: " .. op.parentPath end
+		local newOk, inst = pcall(function() return Instance.new(op.className :: string) end)
+		if not newOk or not inst then
+			return false, "Cannot create " .. tostring(op.className) .. ": " .. tostring(inst)
+		end
+		if op.name then (inst :: any).Name = op.name end
+		if op.props then
+			local props = PropertyDeserializer.ConvertProps(op.props)
+			for k, v in props do
+				local sOk, sErr = pcall(function() (inst :: any)[k] = v end)
+				if not sOk then
+					inst:Destroy()
+					return false, string.format("createInstance: failed to set %s on new %s: %s",
+						k, op.className, tostring(sErr))
+				end
+			end
+		end
+		if op.source then
+			pcall(function() (inst :: any).Source = op.source end)
+		end
+		inst.Parent = parent
 		return true, nil
 
 	elseif op.op == "rename" then

@@ -134,6 +134,7 @@ export interface PatchOp {
     | "setProperties"
     | "createFolder"
     | "createScript"
+    | "createInstance"
     | "rename"
     | "delete";
   path?: string;

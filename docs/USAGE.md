@@ -99,6 +99,45 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 | `rotree_write_patch`  | Save a patch into `.rotree/patches/`. **Does not apply it.**      |
 | `rotree_apply_patch`  | **Apply to live game** — only if user toggled "Allow AI auto-apply" in plugin. Critical patches always refused (use `rotree_write_patch`). |
 
+## Patch ops the AI can use
+
+When the AI calls `rotree_write_patch` or `rotree_apply_patch`, each operation in the `ops` array is one of:
+
+| Op               | Required fields                          | Optional      | What it does                                       |
+|------------------|------------------------------------------|---------------|----------------------------------------------------|
+| `setSource`      | `path`, `source`                         |               | Replace a script's Source                          |
+| `setProperties`  | `path`, `props`                          |               | Set arbitrary properties on an existing instance   |
+| `createInstance` | `parentPath`, `className`                | `name`, `props`, `source` | Create **any** Instance class (Part, Model, Frame, Light, RemoteEvent, Tool, …) |
+| `createScript`   | `parentPath`, `name`, `className`        | `source`      | Shortcut for `Script` / `LocalScript` / `ModuleScript` |
+| `createFolder`   | `parentPath`, `name`                     |               | Create a Folder                                    |
+| `rename`         | `path`, `name`                           |               | Rename an instance                                 |
+| `delete`         | `path`                                   |               | Destroy an instance                                |
+
+### Property value shapes
+
+The AI passes properties in the same JSON shapes that `rotree_get_instance` returns. The plugin reconstructs Roblox types:
+
+| Roblox type      | JSON shape                                                              |
+|------------------|-------------------------------------------------------------------------|
+| `Vector3`        | `{x, y, z}` or `[x, y, z]`                                              |
+| `Vector2`        | `{x, y}` or `[x, y]`                                                    |
+| `Color3`         | `{r, g, b}` or `[r, g, b]` (auto-detected if all in [0,1])              |
+| `UDim`           | `{scale, offset}`                                                       |
+| `UDim2`          | `{x: {scale, offset}, y: {scale, offset}}` or `[sx, ox, sy, oy]`        |
+| `CFrame`         | `{components: [12 numbers]}`                                            |
+| `BrickColor`     | `{name}` or `{name, number}`                                            |
+| `NumberRange`    | `{min, max}` (numbers)                                                  |
+| `Rect`           | `{min: {x, y}, max: {x, y}}`                                            |
+| `Ray`            | `{origin: {x,y,z}, direction: {x,y,z}}`                                 |
+| `NumberSequence` | `{keypoints: [{time, value, envelope?}]}`                               |
+| `ColorSequence`  | `{keypoints: [{time, value: {r,g,b}}]}`                                 |
+| `EnumItem`       | Plain string (e.g. `"Neon"`) or `{__enum, value}`                       |
+
+### Limits
+
+- Up to **20 `delete` ops** per patch. Beyond that = critical = manual confirmation.
+- Critical paths (DataStore, leaderstats, MarketplaceService, anti-cheat) are always refused by auto-apply.
+
 ## AI auto-apply
 
 By default, the AI can only **propose** changes (`rotree_write_patch` → user reviews + clicks Apply in Studio). To let the AI **modify the game directly**, you must:

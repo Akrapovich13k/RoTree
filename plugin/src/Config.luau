@@ -83,7 +83,7 @@ Config.CRITICAL_PATTERNS = {
 	"AntiExploit",
 }
 
-Config.MAX_PATCH_DELETES = 5
+Config.MAX_PATCH_DELETES = 20
 Config.MAX_SOURCE_BYTES_PER_SCRIPT = 200_000
 
 -- Endpoints

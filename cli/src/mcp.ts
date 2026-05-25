@@ -169,7 +169,7 @@ const TOOLS = [
   {
     name: "rotree_write_patch",
     description:
-      "Save a RoTree patch JSON to .rotree/patches/<id>.json so the user can apply it via the Studio plugin (Apply Patch button). DOES NOT modify the live game. Use this for changes you want the user to review first.",
+      "Save a RoTree patch JSON to .rotree/patches/<id>.json so the user can apply it via the Studio plugin (Apply Patch button). DOES NOT modify the live game. Use this for changes you want the user to review first. Supports the same ops as rotree_apply_patch (setSource, setProperties, createInstance, createScript, createFolder, rename, delete).",
     inputSchema: {
       type: "object",
       properties: {
@@ -184,7 +184,7 @@ const TOOLS = [
             properties: {
               op: {
                 type: "string",
-                enum: ["setSource", "setProperties", "createFolder", "createScript", "rename", "delete"],
+                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "delete"],
               },
               path: { type: "string" },
               parentPath: { type: "string" },
@@ -205,7 +205,19 @@ const TOOLS = [
   {
     name: "rotree_apply_patch",
     description:
-      "Apply a patch to the live Roblox game. ONLY works if the user has enabled 'Allow AI auto-apply' in the RoTree plugin. Critical patches (DataStore, leaderstats, MarketplaceService, anti-cheat) are always refused — those must go through `rotree_write_patch` for manual review. A backup snapshot is created automatically before any apply. If auto-apply is off or Studio isn't responding, the patch is saved as a pending patch instead.",
+      "Apply a patch to the live Roblox game. ONLY works if the user has enabled 'Allow AI auto-apply' in the RoTree plugin. " +
+      "Supported ops:\n" +
+      "  - setSource: change Source of a Script/LocalScript/ModuleScript (needs path, source)\n" +
+      "  - setProperties: set props on an existing instance (needs path, props)\n" +
+      "  - createInstance: create ANY instance class (needs parentPath, className; optional name, props, source)\n" +
+      "  - createScript: shortcut for Script/LocalScript/ModuleScript (needs parentPath, name, className; optional source)\n" +
+      "  - createFolder: create a Folder (needs parentPath, name)\n" +
+      "  - rename: rename an instance (needs path, name)\n" +
+      "  - delete: destroy an instance (needs path)\n" +
+      "Properties must be passed in the same JSON shapes that PropertyScanner emits: Vector3 = {x,y,z}, Color3 = {r,g,b}, UDim2 = {x:{scale,offset}, y:{scale,offset}}, CFrame = {components:[12 nums]}, enums = plain string or {__enum, value}. Arrays of 3 numbers are accepted as Vector3 (or Color3 if all in [0,1]). " +
+      "Critical patches (DataStore, leaderstats, MarketplaceService, anti-cheat, >20 deletes) are always refused — those must go through `rotree_write_patch` for manual review. " +
+      "A backup snapshot is created automatically before any apply, and every change goes through Studio's ChangeHistoryService so the user can Ctrl+Z. " +
+      "If auto-apply is off or Studio isn't responding, the patch is saved as a pending patch instead.",
     inputSchema: {
       type: "object",
       properties: {
@@ -220,7 +232,7 @@ const TOOLS = [
             properties: {
               op: {
                 type: "string",
-                enum: ["setSource", "setProperties", "createFolder", "createScript", "rename", "delete"],
+                enum: ["setSource", "setProperties", "createFolder", "createScript", "createInstance", "rename", "delete"],
               },
               path: { type: "string" },
               parentPath: { type: "string" },
