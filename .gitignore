@@ -1,0 +1,17 @@
+# RoTree exports are local-only — never commit them.
+.rotree/
+.rotreeignore
+
+# Build artifacts
+plugin/RoTree.rbxm
+plugin/RoTree.rbxmx
+node_modules/
+**/node_modules/
+**/out/
+extension/*.vsix
+cli/*.tgz
+
+# Editor noise
+.DS_Store
+.vscode/
+*.log
