@@ -22,6 +22,9 @@ jobs:
       - name: Install
         run: npm install
 
+      - name: Build core types
+        run: npm run build -w @rotree/core
+
       - name: Type-check all workspaces
         run: npm run lint --workspaces --if-present
 
