@@ -20,6 +20,12 @@ on:
 permissions:
   contents: write
 
+env:
+  # Opt JS-based actions into Node 24 — silences the Node 20 deprecation
+  # notice GitHub started showing in Sep 2025. See:
+  # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     name: Build standalone binaries + Roblox plugin
