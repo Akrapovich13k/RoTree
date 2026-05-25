@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+<title>RoTree — plugin preview</title>
+<style>
+  :root {
+    --bg: rgb(245, 246, 248);
+    --surface: rgb(255, 255, 255);
+    --surface-alt: rgb(250, 250, 252);
+    --border: rgba(228, 229, 232, 0.85);
+    --divider: rgb(235, 236, 239);
+    --text-primary: rgb(28, 28, 30);
+    --text-secondary: rgb(99, 99, 102);
+    --text-tertiary: rgb(142, 142, 147);
+    --accent: rgb(10, 132, 255);
+    --accent-soft: rgb(225, 237, 254);
+    --success: rgb(48, 209, 88);
+    --warning: rgb(255, 159, 10);
+    --danger: rgb(255, 69, 58);
+    --btn-bg: rgb(10, 132, 255);
+    --btn-fg: rgb(255, 255, 255);
+    --btn-bg-hover: rgb(0, 122, 245);
+    --ghost-bg: rgb(242, 243, 245);
+    --ghost-fg: rgb(28, 28, 30);
+    --ghost-bg-hover: rgb(232, 233, 236);
+
+    --xs: 4px; --s: 8px; --m: 12px; --l: 16px; --xl: 24px; --xxl: 32px;
+    --r-s: 6px; --r-m: 10px; --r-l: 14px; --r-xl: 20px;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  html.dark {
+    --bg: rgb(28, 28, 30);
+    --surface: rgb(44, 44, 46);
+    --surface-alt: rgb(58, 58, 60);
+    --border: rgba(72, 72, 74, 0.8);
+    --divider: rgb(58, 58, 60);
+    --text-primary: rgb(245, 245, 247);
+    --text-secondary: rgb(174, 174, 178);
+    --text-tertiary: rgb(124, 124, 128);
+    --accent-soft: rgb(28, 50, 86);
+    --ghost-bg: rgb(58, 58, 60);
+    --ghost-fg: rgb(245, 245, 247);
+    --ghost-bg-hover: rgb(72, 72, 74);
+    --btn-bg-hover: rgb(64, 156, 255);
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 24px rgba(0,0,0,0.3);
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not(.light) {
+      --bg: rgb(28, 28, 30);
+      --surface: rgb(44, 44, 46);
+      --surface-alt: rgb(58, 58, 60);
+      --border: rgba(72, 72, 74, 0.8);
+      --divider: rgb(58, 58, 60);
+      --text-primary: rgb(245, 245, 247);
+      --text-secondary: rgb(174, 174, 178);
+      --text-tertiary: rgb(124, 124, 128);
+      --accent-soft: rgb(28, 50, 86);
+      --ghost-bg: rgb(58, 58, 60);
+      --ghost-fg: rgb(245, 245, 247);
+      --ghost-bg-hover: rgb(72, 72, 74);
+      --btn-bg-hover: rgb(64, 156, 255);
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 24px rgba(0,0,0,0.3);
+    }
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
+                 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--m) var(--l);
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .meta-bar a { color: var(--accent); text-decoration: none; }
+
+  .stage {
+    display: flex;
+    justify-content: center;
+    padding: var(--l);
+    padding-top: var(--s);
+  }
+
+  .widget {
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg);
+    border-radius: var(--r-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .widget-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px var(--l);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .widget-titlebar .traffic {
+    display: flex; gap: 6px;
+  }
+  .widget-titlebar .traffic span {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: rgba(0,0,0,.18);
+  }
+  html.dark .widget-titlebar .traffic span { background: rgba(255,255,255,.18); }
+  .widget-titlebar .title { margin-left: auto; margin-right: auto; padding-right: 33px; }
+
+  .scroll {
+    padding: var(--xl) var(--xl) var(--xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--l);
+  }
+
+  .heading h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .heading p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-l);
+    padding: var(--l);
+    display: flex;
+    flex-direction: column;
+    gap: var(--m);
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .card .sub {
+    margin: -8px 0 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .btn {
+    appearance: none;
+    border: none;
+    border-radius: var(--r-m);
+    padding: 8px 12px;
+    height: 34px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    transition: background-color 120ms ease;
+  }
+  .btn.primary { background: var(--btn-bg); color: var(--btn-fg); }
+  .btn.primary:active { background: var(--btn-bg-hover); }
+  .btn.ghost   { background: var(--ghost-bg); color: var(--ghost-fg); }
+  .btn.ghost:active { background: var(--ghost-bg-hover); }
+
+  .statline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .statline .label { color: var(--text-secondary); }
+  .statline .value { color: var(--text-primary); font-weight: 500; }
+
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .dot.online  { background: var(--success); }
+  .dot.offline { background: var(--danger); box-shadow: 0 0 0 4px rgba(255,69,58,0.08); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m);
+    font-size: 13px;
+  }
+  .toggle {
+    position: relative;
+    width: 44px; height: 26px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle .track {
+    position: absolute; inset: 0;
+    background: var(--ghost-bg);
+    border-radius: 13px;
+    transition: background-color 160ms ease;
+  }
+  .toggle .knob {
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: white;
+    top: 2px; left: 2px;
+    transition: transform 160ms cubic-bezier(.2,.7,.2,1);
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  }
+  .toggle input:checked + .track { background: var(--accent); }
+  .toggle input:checked + .track + .knob { transform: translateX(18px); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  html.dark .badge { color: rgb(160, 200, 255); }
+  .badge.warn { background: rgba(255, 159, 10, 0.16); color: var(--warning); }
+  .badge.danger { background: rgba(255, 69, 58, 0.16); color: var(--danger); }
+
+  .bridge-row {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    margin-top: var(--m);
+  }
+
+  .annotation {
+    max-width: 380px;
+    margin: 0 auto;
+    padding: var(--l);
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .annotation code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+  }
+  .annotation h3 {
+    margin: var(--xl) 0 var(--xs);
+    font-size: 13px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .annotation ul { padding-left: 18px; margin: var(--xs) 0; }
+  .annotation li { margin: 4px 0; }
+
+  .theme-switch {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .theme-switch:active { background: var(--ghost-bg-hover); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="meta-bar">
+    <span>RoTree plugin preview</span>
+    <button class="theme-switch" id="themeBtn">Light / Dark</button>
+  </div>
+
+  <div class="stage">
+    <!-- Faithful reproduction of the DockWidgetPluginGui that mounts inside Studio. -->
+    <div class="widget">
+      <div class="widget-titlebar">
+        <div class="traffic"><span></span><span></span><span></span></div>
+        <div class="title">RoTree — Roblox Game Tree Bridge</div>
+      </div>
+      <div class="scroll">
+
+        <!-- Header -->
+        <div class="heading">
+          <h1>RoTree</h1>
+          <p>Roblox Game Tree Bridge</p>
+        </div>
+
+        <!-- Bridge card -->
+        <div class="card">
+          <h2>Bridge</h2>
+          <p class="sub">Connection to VS Code or rotree CLI</p>
+          <div class="bridge-row">
+            <span class="dot online"></span>
+            <span>Online · localhost:34872</span>
+          </div>
+          <button class="btn ghost">Test connection</button>
+        </div>
+
+        <!-- Exports card -->
+        <div class="card">
+          <h2>Exports</h2>
+          <p class="sub">Send your game tree to the bridge</p>
+          <button class="btn primary">Export Game Tree</button>
+          <button class="btn ghost">Export Selected</button>
+          <button class="btn ghost">Export Scripts</button>
+          <button class="btn ghost">Export Remotes</button>
+          <button class="btn ghost">Export GUI</button>
+          <label class="toggle-row">
+            <span>Watch mode (auto-export on changes)</span>
+            <span class="toggle">
+              <input type="checkbox" checked>
+              <span class="track"></span>
+              <span class="knob"></span>
+            </span>
+          </label>
+          <label class="toggle-row">
+            <span>Safe Mode (redact sensitive sources)</span>
+            <span class="toggle">
+              <input type="checkbox">
+              <span class="track"></span>
+              <span class="knob"></span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Last export stats card -->
+        <div class="card">
+          <h2>Last export</h2>
+          <p class="sub">Snapshot of what was sent</p>
+          <div class="statline"><span class="label">When</span><span class="value">2026-05-25 12:34 UTC (auto)</span></div>
+          <div class="statline"><span class="label">Instances</span><span class="value">2 471</span></div>
+          <div class="statline"><span class="label">Scripts</span><span class="value">18</span></div>
+          <div class="statline"><span class="label">Remotes</span><span class="value">5</span></div>
+          <div class="statline"><span class="label">GUI elements</span><span class="value">23</span></div>
+          <div class="statline"><span class="label">Parts</span><span class="value">142</span></div>
+          <div class="statline"><span class="label">ModuleScripts</span><span class="value">9</span></div>
+        </div>
+
+        <!-- Claude Context card -->
+        <div class="card">
+          <h2>Claude Context</h2>
+          <p class="sub">Generate the file Claude reads</p>
+          <button class="btn ghost">Generate Claude Context</button>
+          <button class="btn ghost">Open Export Folder</button>
+        </div>
+
+        <!-- Rojo card -->
+        <div class="card">
+          <h2>Rojo</h2>
+          <p class="sub">Detected from workspace</p>
+          <div class="statline"><span class="label">Status</span><span class="value">Detected · 2 mismatched</span></div>
+        </div>
+
+        <!-- Patch safety card -->
+        <div class="card">
+          <h2>Patch Safety</h2>
+          <p class="sub">Apply only after preview + confirmation</p>
+          <div class="statline"><span class="label">Backups</span><span class="value">Auto, per patch</span></div>
+          <div class="statline"><span class="label">Critical confirm</span><span class="value">DataStore, leaderstats…</span></div>
+          <button class="btn ghost">Apply Patch…</button>
+          <label class="toggle-row">
+            <span>Allow AI auto-apply (non-critical only)</span>
+            <span class="toggle">
+              <input type="checkbox">
+              <span class="track"></span>
+              <span class="knob"></span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Appearance card -->
+        <div class="card">
+          <h2>Appearance</h2>
+          <label class="toggle-row">
+            <span>Dark mode</span>
+            <span class="toggle">
+              <input type="checkbox" id="darkToggle">
+              <span class="track"></span>
+              <span class="knob"></span>
+            </span>
+          </label>
+        </div>
+
+        <div class="footer">RoTree v0.1.0 · local-only</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <h3>What you're looking at</h3>
+    <p>This is a faithful HTML mockup of the <code>DockWidgetPluginGui</code> that mounts inside Roblox Studio after you install <code>RoTree.rbxm</code>. Colors, spacing, fonts, and component layout come directly from <code>plugin/src/UI/Theme.luau</code> and <code>plugin/src/UI/MainWindow.luau</code> — what you see is what you'll get, modulo Roblox's slightly different font rendering.</p>
+
+    <h3>What each card does</h3>
+    <ul>
+      <li><b>Bridge</b> — green dot when <code>rotree serve</code> (or VS Code) is reachable on localhost:34872. "Test connection" pings it.</li>
+      <li><b>Exports</b> — manual exports + the two toggles. Watch mode = re-export on every DataModel change (event-driven + debounced).</li>
+      <li><b>Last export</b> — stats from the most recent payload.</li>
+      <li><b>Claude Context</b> — regenerate <code>CLAUDE_CONTEXT.md</code> or reveal <code>.rotree/</code>.</li>
+      <li><b>Rojo</b> — shows the diff status against your <code>default.project.json</code>.</li>
+      <li><b>Patch Safety</b> — review pending patches; toggle to let the AI auto-apply non-critical patches.</li>
+      <li><b>Appearance</b> — light / dark.</li>
+    </ul>
+
+    <h3>Try the toggles</h3>
+    <p>The toggles on this page are live — tap "Dark mode" on the preview itself, or the "Light / Dark" pill at the top of the page. Both work and persist via localStorage.</p>
+  </div>
+
+</div>
+
+<script>
+  // Theme handling — uses html.dark / html.light to override the OS preference.
+  const root = document.documentElement;
+  const themeBtn = document.getElementById("themeBtn");
+  const darkToggle = document.getElementById("darkToggle");
+
+  function applyStored() {
+    const stored = localStorage.getItem("rotree-theme");
+    if (stored === "dark") root.classList.add("dark");
+    else if (stored === "light") root.classList.add("light");
+    syncToggle();
+  }
+  function syncToggle() {
+    const isDark = root.classList.contains("dark") ||
+      (!root.classList.contains("light") &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    darkToggle.checked = isDark;
+  }
+  function setTheme(name) {
+    root.classList.remove("dark", "light");
+    if (name === "dark") root.classList.add("dark");
+    else if (name === "light") root.classList.add("light");
+    localStorage.setItem("rotree-theme", name);
+    syncToggle();
+  }
+
+  themeBtn.addEventListener("click", () => {
+    const isDark = root.classList.contains("dark") ||
+      (!root.classList.contains("light") &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setTheme(isDark ? "light" : "dark");
+  });
+
+  darkToggle.addEventListener("change", () => {
+    setTheme(darkToggle.checked ? "dark" : "light");
+  });
+
+  applyStored();
+</script>
+</body>
+</html>
