@@ -32,6 +32,8 @@ widget.Name = "RoTreeMain"
 
 local safeMode = false
 local watchOn = false
+local autoApplyOn = false
+local autoApplyLoopRunning = false
 
 local function notify(title: string, text: string)
 	local ok = pcall(function()
@@ -146,6 +148,51 @@ local function rebuildWindow()
 				notify("RoTree", "Watch mode off.")
 			end
 		end,
+		OnAutoApplyChanged = function(on: boolean)
+			autoApplyOn = on
+			if on then
+				notify("RoTree", "AI auto-apply ON. Critical patches still need manual confirmation.")
+				if not autoApplyLoopRunning then
+					autoApplyLoopRunning = true
+					task.spawn(function()
+						while autoApplyOn do
+							local patch = HttpBridge.PollAutoApply()
+							if patch then
+								if PatchService.IsCritical(patch) then
+									-- Refuse here, the user can apply via Apply Patch.
+									HttpBridge.ReportApplyResult({
+										id = patch.id,
+										success = false,
+										applied = 0,
+										failed = #patch.ops,
+										error = "Critical patch — refused by auto-apply. Open Studio → RoTree → Apply Patch to review.",
+									})
+									notify("RoTree", "Critical patch refused — queued for manual apply: " .. patch.title)
+								else
+									local result = PatchService.Apply(patch, false)
+									HttpBridge.ReportApplyResult({
+										id = patch.id,
+										success = result.success,
+										applied = result.applied,
+										failed = result.failed,
+										error = result.error,
+									})
+									if result.success then
+										notify("RoTree", "Auto-applied: " .. patch.title)
+									else
+										notify("RoTree", "Auto-apply failed: " .. (result.error or "?"))
+									end
+								end
+							end
+							task.wait(2)
+						end
+						autoApplyLoopRunning = false
+					end)
+				end
+			else
+				notify("RoTree", "AI auto-apply OFF.")
+			end
+		end,
 		OnThemeToggle = function(_dark: boolean)
 			rebuildWindow()
 		end,
@@ -168,4 +215,5 @@ end)
 
 plugin.Unloading:Connect(function()
 	WatchService.Disable()
+	autoApplyOn = false
 end)

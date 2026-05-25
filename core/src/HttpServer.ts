@@ -1,5 +1,5 @@
 import * as http from "http";
-import { ExportPayload, BackupPayload } from "./types";
+import { ExportPayload, BackupPayload, Patch, ApplyResult } from "./types";
 import { ExportReader } from "./ExportReader";
 import { PatchManager } from "./PatchManager";
 
@@ -18,10 +18,21 @@ export interface HttpServerOptions {
   log?: LogHandler;
 }
 
+interface QueuedPatch {
+  patch: Patch;
+  enqueuedAt: number;
+  resolver: (result: ApplyResult) => void;
+  rejecter: (err: Error) => void;
+  resolved: boolean;
+}
+
 export class HttpServer {
   private server?: http.Server;
   private readonly log: LogHandler;
   private currentPort?: number;
+  private readonly autoApplyQueue: QueuedPatch[] = [];
+  private readonly autoApplyPending = new Map<string, QueuedPatch>();
+  private autoApplyOnlineAt = 0;
 
   constructor(private readonly opts: HttpServerOptions) {
     this.log = opts.log ?? (() => {});
@@ -33,6 +44,33 @@ export class HttpServer {
 
   get port(): number | undefined {
     return this.currentPort;
+  }
+
+  get autoApplyOnline(): boolean {
+    // Plugin considered online if it polled within the last 6 seconds.
+    return Date.now() - this.autoApplyOnlineAt < 6000;
+  }
+
+  queueAutoApply(patch: Patch, timeoutMs: number = 12000): Promise<ApplyResult> {
+    return new Promise<ApplyResult>((resolve, reject) => {
+      const entry: QueuedPatch = {
+        patch,
+        enqueuedAt: Date.now(),
+        resolver: resolve,
+        rejecter: reject,
+        resolved: false,
+      };
+      this.autoApplyQueue.push(entry);
+      this.autoApplyPending.set(patch.id, entry);
+      setTimeout(() => {
+        if (entry.resolved) return;
+        entry.resolved = true;
+        this.autoApplyPending.delete(patch.id);
+        const i = this.autoApplyQueue.indexOf(entry);
+        if (i >= 0) this.autoApplyQueue.splice(i, 1);
+        reject(new Error("auto-apply timed out — plugin did not pick up the patch in time"));
+      }, timeoutMs);
+    });
   }
 
   async start(port: number): Promise<void> {
@@ -125,6 +163,40 @@ export class HttpServer {
           return;
         }
         this.send(res, 200, p);
+        return;
+      }
+
+      if (method === "GET" && url === "/rotree/auto-apply/next") {
+        this.autoApplyOnlineAt = Date.now();
+        const entry = this.autoApplyQueue.shift();
+        if (!entry) {
+          this.send(res, 200, { patch: null });
+          return;
+        }
+        this.send(res, 200, { patch: entry.patch });
+        return;
+      }
+
+      if (method === "POST" && url === "/rotree/auto-apply/result") {
+        this.autoApplyOnlineAt = Date.now();
+        const body = await this.readBody(req);
+        const parsed = JSON.parse(body) as ApplyResult;
+        const entry = this.autoApplyPending.get(parsed.id);
+        if (entry && !entry.resolved) {
+          entry.resolved = true;
+          this.autoApplyPending.delete(parsed.id);
+          entry.resolver(parsed);
+        }
+        this.send(res, 200, { ok: true });
+        return;
+      }
+
+      if (method === "GET" && url === "/rotree/auto-apply/status") {
+        this.send(res, 200, {
+          online: this.autoApplyOnline,
+          queued: this.autoApplyQueue.length,
+          pending: this.autoApplyPending.size,
+        });
         return;
       }
 

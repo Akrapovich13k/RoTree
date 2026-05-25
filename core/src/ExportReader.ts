@@ -58,6 +58,9 @@ export class ExportReader {
     if (p.tags && Object.keys(p.tags).length > 0) {
       await this.writeJson("collection-tags.json", p.tags);
     }
+    if (p.properties && Object.keys(p.properties).length > 0) {
+      await this.writeJson("instance-properties.json", p.properties);
+    }
 
     if (p.tree && p.tree.length > 0) {
       const services: Record<string, { children: number; classes: Record<string, number> }> = {};

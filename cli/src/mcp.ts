@@ -12,10 +12,14 @@ import {
   ExportReader,
   ContextBuilder,
   RojoComparator,
+  PatchManager,
+  HttpServer,
   TreeNode,
   ScriptEntry,
-  RemoteEntry,
   GuiEntry,
+  ExportPayload,
+  BackupPayload,
+  Patch,
   ROTREE_VERSION,
 } from "@rotree/core";
 
@@ -138,13 +142,74 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
+    name: "rotree_get_instance",
+    description:
+      "Return ALL captured properties for a single instance: tree node info, attributes, and the full property bag (Position, Size, Color, Material, Text, Source, etc.). Use this when you need to know every property of one specific object.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Dot-separated fullPath, e.g. 'Workspace.Shop.Trigger'." },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "rotree_get_properties",
+    description:
+      "Bulk property fetch. Returns { path: { prop: value } } for all paths matching a `pathPrefix`. Without the prefix returns everything (can be large — prefer `rotree_get_instance` for one object).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        pathPrefix: { type: "string", description: "Only entries whose fullPath starts with this string." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "rotree_write_patch",
     description:
-      "Save a RoTree patch JSON to .rotree/patches/<id>.json so the user can apply it via the Studio plugin (Apply Patch button). DOES NOT modify the live game.",
+      "Save a RoTree patch JSON to .rotree/patches/<id>.json so the user can apply it via the Studio plugin (Apply Patch button). DOES NOT modify the live game. Use this for changes you want the user to review first.",
     inputSchema: {
       type: "object",
       properties: {
         id: { type: "string", description: "Filename-safe identifier (e.g. 'fix-shop-typo')." },
+        title: { type: "string" },
+        description: { type: "string" },
+        critical: { type: "boolean", default: false },
+        ops: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              op: {
+                type: "string",
+                enum: ["setSource", "setProperties", "createFolder", "createScript", "rename", "delete"],
+              },
+              path: { type: "string" },
+              parentPath: { type: "string" },
+              name: { type: "string" },
+              className: { type: "string" },
+              source: { type: "string" },
+              props: { type: "object" },
+            },
+            required: ["op"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["id", "title", "ops"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "rotree_apply_patch",
+    description:
+      "Apply a patch to the live Roblox game. ONLY works if the user has enabled 'Allow AI auto-apply' in the RoTree plugin. Critical patches (DataStore, leaderstats, MarketplaceService, anti-cheat) are always refused — those must go through `rotree_write_patch` for manual review. A backup snapshot is created automatically before any apply. If auto-apply is off or Studio isn't responding, the patch is saved as a pending patch instead.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
         title: { type: "string" },
         description: { type: "string" },
         critical: { type: "boolean", default: false },
@@ -205,6 +270,13 @@ function truncateTree(node: TreeNode, depth: number): TreeNode {
 interface McpServerOptions {
   workspaceRoot: string;
   exportFolderName?: string;
+  port?: number;
+  noServe?: boolean;
+}
+
+function dbg(msg: string): void {
+  // MCP stdio is reserved for JSON-RPC — log to stderr only.
+  process.stderr.write(`[rotree mcp] ${msg}\n`);
 }
 
 export async function startMcpServer(opts: McpServerOptions): Promise<void> {
@@ -212,8 +284,40 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
     workspaceRoot: opts.workspaceRoot,
     exportFolderName: opts.exportFolderName,
   });
+  await reader.ensureFolder();
   const rojo = new RojoComparator(opts.workspaceRoot, reader);
   const context = new ContextBuilder(reader, rojo);
+  const patches = new PatchManager(reader);
+
+  let httpServer: HttpServer | undefined;
+  if (!opts.noServe) {
+    httpServer = new HttpServer({
+      reader,
+      patches,
+      onExport: async (p: ExportPayload | BackupPayload) => {
+        if (p.kind === "backup") {
+          await reader.writeBackup(p as BackupPayload);
+          return;
+        }
+        await reader.writeExport(p as ExportPayload);
+      },
+      onOpenFolder: async () => {
+        // No-op in MCP context — the AI doesn't reveal folders.
+      },
+      log: (msg, level) => {
+        if (level !== "info") dbg(`[${level}] ${msg}`);
+      },
+    });
+    const port = opts.port ?? 34872;
+    try {
+      await httpServer.start(port);
+      dbg(`bridge listening on http://localhost:${port}`);
+    } catch (err) {
+      dbg(`could not start bridge on ${port}: ${(err as Error).message}`);
+      dbg("MCP tools that read .rotree/ still work, but auto-apply won't.");
+      httpServer = undefined;
+    }
+  }
 
   const server = new Server(
     { name: "rotree", version: ROTREE_VERSION },
@@ -431,6 +535,101 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
           const diff = await rojo.compare();
           if (!diff) return textResult("could not parse Rojo project");
           return jsonResult(diff);
+        }
+
+        case "rotree_get_instance": {
+          const target = String(args.path ?? "");
+          if (!target) return textResult("path is required");
+          const tree = (await reader.tree()) ?? [];
+          const node = findInTree(tree, target);
+          const properties = (await reader.readJson<Record<string, Record<string, unknown>>>(
+            "instance-properties.json",
+          )) ?? {};
+          const attributes = (await reader.readJson<Record<string, Record<string, unknown>>>(
+            "attributes-map.json",
+          )) ?? {};
+          const tags = (await reader.readJson<Record<string, string[]>>(
+            "collection-tags.json",
+          )) ?? {};
+
+          // Figure out which tags include this path
+          const ownTags: string[] = [];
+          for (const [tag, paths] of Object.entries(tags)) {
+            if (paths.includes(target)) ownTags.push(tag);
+          }
+
+          // If it's a script, attach source from scripts-map
+          let source: string | null | undefined;
+          const scripts = (await reader.scripts()) ?? [];
+          const scriptEntry = scripts.find((s) => s.fullPath === target);
+          if (scriptEntry) source = scriptEntry.source;
+
+          return jsonResult({
+            path: target,
+            found: node !== null || properties[target] !== undefined,
+            node,
+            properties: properties[target] ?? {},
+            attributes: attributes[target] ?? {},
+            tags: ownTags,
+            source,
+          });
+        }
+
+        case "rotree_get_properties": {
+          const all = (await reader.readJson<Record<string, Record<string, unknown>>>(
+            "instance-properties.json",
+          )) ?? {};
+          const prefix = typeof args.pathPrefix === "string" ? args.pathPrefix : "";
+          if (!prefix) return jsonResult(all);
+          const filtered: Record<string, Record<string, unknown>> = {};
+          for (const [k, v] of Object.entries(all)) {
+            if (k.startsWith(prefix)) filtered[k] = v;
+          }
+          return jsonResult(filtered);
+        }
+
+        case "rotree_apply_patch": {
+          const patch: Patch = {
+            id: String(args.id),
+            title: String(args.title),
+            description: typeof args.description === "string" ? args.description : undefined,
+            critical: args.critical === true,
+            ops: Array.isArray(args.ops) ? (args.ops as Patch["ops"]) : [],
+          };
+          // Always write the patch file so it's reviewable + recoverable.
+          const safeId = patch.id.replace(/[^a-z0-9._-]+/gi, "_");
+          const dir = path.join(reader.folder, "patches");
+          await fs.mkdir(dir, { recursive: true });
+          await fs.writeFile(path.join(dir, safeId + ".json"), JSON.stringify(patch, null, 2), "utf8");
+
+          if (!httpServer) {
+            return textResult(
+              `Patch saved to .rotree/patches/${safeId}.json. ` +
+              `(No live bridge — start \`rotree serve\` or run \`rotree mcp\` without --no-serve to enable auto-apply.) ` +
+              `Ask the user to apply via Studio → RoTree → Apply Patch.`,
+            );
+          }
+          if (!httpServer.autoApplyOnline) {
+            return textResult(
+              `Patch saved to .rotree/patches/${safeId}.json. ` +
+              `Auto-apply is OFF (toggle "Allow AI auto-apply" in the Studio plugin to enable). ` +
+              `Ask the user to apply via Studio → RoTree → Apply Patch.`,
+            );
+          }
+
+          try {
+            const result = await httpServer.queueAutoApply(patch, 12000);
+            return jsonResult({
+              applied: true,
+              result,
+              backupFolder: ".rotree/backups/",
+            });
+          } catch (err) {
+            return textResult(
+              `Queued but no response in time: ${(err as Error).message}. ` +
+              `Patch is still saved at .rotree/patches/${safeId}.json for manual review.`,
+            );
+          }
         }
 
         case "rotree_write_patch": {

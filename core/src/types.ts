@@ -100,8 +100,17 @@ export interface ExportPayload {
   parts?: PartEntry[];
   attributes?: Record<string, Record<string, unknown>>;
   tags?: Record<string, string[]>;
+  properties?: Record<string, Record<string, unknown>>;
   stats: ExportStats;
   claudeContext?: string;
+}
+
+export interface ApplyResult {
+  id: string;
+  success: boolean;
+  applied: number;
+  failed: number;
+  error?: string;
 }
 
 export interface BackupSnapshot {

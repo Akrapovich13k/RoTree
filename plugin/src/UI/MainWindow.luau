@@ -18,6 +18,7 @@ export type Api = {
 	OnPingBridge: () -> boolean,
 	OnSafeModeChanged: (boolean) -> (),
 	OnWatchModeChanged: (boolean) -> (),
+	OnAutoApplyChanged: (boolean) -> (),
 	OnThemeToggle: (boolean) -> (),
 }
 
@@ -139,6 +140,7 @@ function MainWindow.Build(parent: PluginGui, api: Api)
 	Components.StatLine(patch, "Backups", "Auto, per patch")
 	Components.StatLine(patch, "Critical confirm", "Required for DataStore, leaderstats, etc.")
 	Components.Button(patch, "Apply Patch…", "ghost", api.OnApplyPatch)
+	Components.Toggle(patch, "Allow AI auto-apply (non-critical only)", false, api.OnAutoApplyChanged)
 
 	-- Theme toggle card
 	local themeCard = Components.Card(scroll, "Appearance", nil)

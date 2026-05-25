@@ -93,8 +93,24 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 | `rotree_get_summary`  | The summary.md content.                                           |
 | `rotree_get_attributes` | Attributes map (optionally filtered by path prefix).            |
 | `rotree_get_tags`     | CollectionService tag map.                                        |
+| `rotree_get_instance` | **Full property bag** for one instance (Position, Color, Material, Text, Source, attributes, tags…). |
+| `rotree_get_properties` | Bulk properties by path prefix.                                 |
 | `rotree_rojo_compare` | Diff vs `default.project.json`.                                   |
 | `rotree_write_patch`  | Save a patch into `.rotree/patches/`. **Does not apply it.**      |
+| `rotree_apply_patch`  | **Apply to live game** — only if user toggled "Allow AI auto-apply" in plugin. Critical patches always refused (use `rotree_write_patch`). |
+
+## AI auto-apply
+
+By default, the AI can only **propose** changes (`rotree_write_patch` → user reviews + clicks Apply in Studio). To let the AI **modify the game directly**, you must:
+
+1. Have `rotree mcp` running (it embeds the HTTP bridge — no need for a separate `rotree serve`).
+2. In the Studio plugin window → Patch Safety card → toggle **"Allow AI auto-apply (non-critical only)"** on.
+
+Once both are on:
+- The plugin polls the bridge every 2 s for queued patches.
+- The AI calls `rotree_apply_patch(...)` → patch is queued → plugin picks it up → backup snapshot → applies → reports result back to the AI within ~12 s.
+- Critical patches (DataStore, leaderstats, MarketplaceService, anti-cheat, bulk deletes) are **always refused** by auto-apply and routed to the manual queue instead.
+- Every applied patch goes through Studio's ChangeHistoryService → you can **Ctrl+Z** to undo.
 
 Plus MCP resources (`rotree://context`, `rotree://tree`, `rotree://scripts`, ...) for clients that prefer file-style access.
 

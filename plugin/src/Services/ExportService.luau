@@ -13,6 +13,7 @@ local RemoteScanner = require(script.Parent.RemoteScanner)
 local PartScanner = require(script.Parent.PartScanner)
 local AttributeScanner = require(script.Parent.AttributeScanner)
 local TagScanner = require(script.Parent.TagScanner)
+local PropertyScanner = require(script.Parent.PropertyScanner)
 local ContextGenerator = require(script.Parent.ContextGenerator)
 
 local ExportService = {}
@@ -109,6 +110,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 	local parts: { PartScanner.PartEntry } = {}
 	local attributes: { [string]: { [string]: any } } = {}
 	local tags: { [string]: { string } } = {}
+	local properties: { [string]: { [string]: any } } = {}
 
 	if kind == "full" or kind == "safe" or kind == "selected" then
 		tree = buildTree(roots, ignore, instCounter)
@@ -118,6 +120,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 		parts = PartScanner.Scan(roots, { maxParts = 2000 })
 		attributes = AttributeScanner.Scan(roots)
 		tags = TagScanner.Scan()
+		properties = PropertyScanner.Scan(roots, { maxInstances = 5000 })
 	elseif kind == "scripts" then
 		scripts = ScriptScanner.Scan(roots, { ignore = ignore, safeMode = safeMode })
 	elseif kind == "remotes" then
@@ -165,6 +168,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 		parts = parts,
 		attributes = attributes,
 		tags = tags,
+		properties = properties,
 		stats = stats,
 		claudeContext = contextMd,
 	}

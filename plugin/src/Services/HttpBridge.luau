@@ -74,4 +74,15 @@ function HttpBridge.GetPatch(id: string): any?
 	return res
 end
 
+function HttpBridge.PollAutoApply(): any?
+	local ok, res = request("GET", "/rotree/auto-apply/next")
+	if not ok or typeof(res) ~= "table" then return nil end
+	return (res :: any).patch
+end
+
+function HttpBridge.ReportApplyResult(result: { id: string, success: boolean, applied: number, failed: number, error: string? }): boolean
+	local ok = request("POST", "/rotree/auto-apply/result", result)
+	return ok
+end
+
 return HttpBridge

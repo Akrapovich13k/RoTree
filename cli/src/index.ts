@@ -108,7 +108,12 @@ async function commandMcp(args: ParsedArgs): Promise<void> {
   );
   const exportFolderName =
     typeof args.flags.output === "string" ? args.flags.output : ".rotree";
-  await startMcpServer({ workspaceRoot, exportFolderName });
+  const port = parseInt(
+    typeof args.flags.port === "string" ? args.flags.port : "34872",
+    10,
+  );
+  const noServe = args.flags["no-serve"] === true;
+  await startMcpServer({ workspaceRoot, exportFolderName, port, noServe });
 }
 
 function commandMcpConfig(args: ParsedArgs): void {
