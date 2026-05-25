@@ -9,6 +9,7 @@ local PatchPreview = require(script.UI.PatchPreview)
 local ExportService = require(script.Services.ExportService)
 local HttpBridge = require(script.Services.HttpBridge)
 local PatchService = require(script.Services.PatchService)
+local WatchService = require(script.Services.WatchService)
 
 local toolbar = plugin:CreateToolbar(Config.PLUGIN_NAME)
 local button = toolbar:CreateButton(
@@ -30,6 +31,7 @@ widget.Title = Config.PLUGIN_NAME .. " — " .. Config.PLUGIN_SUBTITLE
 widget.Name = "RoTreeMain"
 
 local safeMode = false
+local watchOn = false
 
 local function notify(title: string, text: string)
 	local ok = pcall(function()
@@ -122,6 +124,28 @@ local function rebuildWindow()
 		OnSafeModeChanged = function(on: boolean)
 			safeMode = on
 		end,
+		OnWatchModeChanged = function(on: boolean)
+			watchOn = on
+			if on then
+				WatchService.Configure({
+					debounceSeconds = 3,
+					minIntervalSeconds = 5,
+					onTrigger = function()
+						local ok, _err, stats = ExportService.Run("full", safeMode)
+						if ok and window then
+							if stats then window.SetStats(stats) end
+							window.SetLastExport(os.date("!%Y-%m-%d %H:%M UTC") .. " (auto)")
+							window.SetBridgeStatus(true)
+						end
+					end,
+				})
+				WatchService.Enable()
+				notify("RoTree", "Watch mode on — re-exports on changes.")
+			else
+				WatchService.Disable()
+				notify("RoTree", "Watch mode off.")
+			end
+		end,
 		OnThemeToggle = function(_dark: boolean)
 			rebuildWindow()
 		end,
@@ -143,5 +167,5 @@ widget:GetPropertyChangedSignal("Enabled"):Connect(function()
 end)
 
 plugin.Unloading:Connect(function()
-	-- Nothing to clean up — no background threads, no global state.
+	WatchService.Disable()
 end)

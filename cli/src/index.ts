@@ -12,6 +12,7 @@ import {
   ExportPayload,
   BackupPayload,
 } from "@rotree/core";
+import { startMcpServer } from "./mcp";
 
 interface ParsedArgs {
   command?: string;
@@ -79,10 +80,12 @@ function help(): void {
   console.log("");
   console.log("Commands:");
   console.log("  serve        Start the local bridge for the Roblox Studio plugin.");
+  console.log("  mcp          Start the MCP server (for Claude Code, Claude Desktop, ...).");
   console.log("  build        Build the RoTree plugin (.rbxm) via Rojo.");
   console.log("  context      Regenerate .rotree/CLAUDE_CONTEXT.md from the last export.");
   console.log("  compare      Diff the Studio export against your default.project.json.");
   console.log("  init         Scaffold a .rotreeignore in the current directory.");
+  console.log("  mcp-config   Print a config snippet for Claude Code / Claude Desktop.");
   console.log("  version      Print the RoTree version.");
   console.log("  help         Show this help.");
   console.log("");
@@ -94,7 +97,40 @@ function help(): void {
   console.log("Examples:");
   console.log("  rotree serve");
   console.log("  rotree serve --port 34900");
+  console.log("  rotree mcp --cwd ~/MyGame");
   console.log("  rotree build --plugin ./plugin --out RoTree.rbxm");
+  console.log("");
+}
+
+async function commandMcp(args: ParsedArgs): Promise<void> {
+  const workspaceRoot = path.resolve(
+    typeof args.flags.cwd === "string" ? args.flags.cwd : process.cwd(),
+  );
+  const exportFolderName =
+    typeof args.flags.output === "string" ? args.flags.output : ".rotree";
+  await startMcpServer({ workspaceRoot, exportFolderName });
+}
+
+function commandMcpConfig(args: ParsedArgs): void {
+  const cwd = typeof args.flags.cwd === "string"
+    ? path.resolve(args.flags.cwd)
+    : process.cwd();
+  const config = {
+    mcpServers: {
+      rotree: {
+        command: "rotree",
+        args: ["mcp", "--cwd", cwd],
+      },
+    },
+  };
+  console.log("");
+  console.log(color(BOLD, "Copy this into your Claude Code or Claude Desktop MCP config:"));
+  console.log("");
+  console.log(JSON.stringify(config, null, 2));
+  console.log("");
+  console.log(color(DIM, "Claude Code: ~/.claude/mcp.json (or your project's .mcp.json)"));
+  console.log(color(DIM, "Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)"));
+  console.log(color(DIM, "                 %APPDATA%\\Claude\\claude_desktop_config.json (Windows)"));
   console.log("");
 }
 
@@ -291,6 +327,12 @@ async function main(): Promise<void> {
       return;
     case "serve":
       await commandServe(args);
+      return;
+    case "mcp":
+      await commandMcp(args);
+      return;
+    case "mcp-config":
+      commandMcpConfig(args);
       return;
     case "context":
       await commandContext(args);

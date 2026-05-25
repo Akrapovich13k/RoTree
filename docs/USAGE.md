@@ -62,17 +62,53 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 
 ## CLI commands
 
-| Command            | What it does                                                    |
-|--------------------|-----------------------------------------------------------------|
-| `rotree serve`     | Start the bridge (like `rojo serve`). Ctrl+C to stop.           |
-| `rotree build`     | Build `RoTree.rbxm` from `plugin/` via Rojo.                    |
-| `rotree context`   | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export.    |
-| `rotree compare`   | Print a Rojo ↔ Studio diff in the terminal.                     |
-| `rotree init`      | Scaffold a `.rotreeignore` in the current directory.            |
-| `rotree version`   | Print version.                                                  |
-| `rotree help`      | Show usage.                                                     |
+| Command             | What it does                                                    |
+|---------------------|-----------------------------------------------------------------|
+| `rotree serve`      | Start the bridge (like `rojo serve`). Ctrl+C to stop.           |
+| `rotree mcp`        | Run as an MCP server over stdio (for Claude Code, Claude Desktop). |
+| `rotree mcp-config` | Print a config snippet to copy into your MCP client config.     |
+| `rotree build`      | Build `RoTree.rbxm` from `plugin/` via Rojo.                    |
+| `rotree context`    | Regenerate `.rotree/CLAUDE_CONTEXT.md` from the last export.    |
+| `rotree compare`    | Print a Rojo ↔ Studio diff in the terminal.                     |
+| `rotree init`       | Scaffold a `.rotreeignore` in the current directory.            |
+| `rotree version`    | Print version.                                                  |
+| `rotree help`       | Show usage.                                                     |
 
 All commands accept `--cwd <dir>`, `--output <dir>`, and (for `serve`) `--port <n>`.
+
+## MCP tools (what Claude can call)
+
+When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these tools — it pulls only what it needs, no token-burning reads of the whole tree:
+
+| Tool                  | Returns                                                           |
+|-----------------------|-------------------------------------------------------------------|
+| `rotree_status`       | Place name, last-export timestamp, stats. Call first.             |
+| `rotree_get_tree`     | A subtree by `path` + `maxDepth`. No source.                      |
+| `rotree_list_scripts` | Lightweight script list (name, path, lines). Filter optional.     |
+| `rotree_get_script`   | One script's full source by path.                                 |
+| `rotree_list_remotes` | All RemoteEvents / RemoteFunctions / Bindables.                   |
+| `rotree_list_gui`     | Top-level ScreenGuis / SurfaceGuis.                               |
+| `rotree_search`       | Substring search across name/path/class. Kind filter optional.    |
+| `rotree_get_context`  | The CLAUDE_CONTEXT.md content.                                    |
+| `rotree_get_summary`  | The summary.md content.                                           |
+| `rotree_get_attributes` | Attributes map (optionally filtered by path prefix).            |
+| `rotree_get_tags`     | CollectionService tag map.                                        |
+| `rotree_rojo_compare` | Diff vs `default.project.json`.                                   |
+| `rotree_write_patch`  | Save a patch into `.rotree/patches/`. **Does not apply it.**      |
+
+Plus MCP resources (`rotree://context`, `rotree://tree`, `rotree://scripts`, ...) for clients that prefer file-style access.
+
+## Watch mode (auto-export)
+
+In the Studio plugin window, toggle **Watch mode** on. From then on:
+
+- The plugin listens to `DescendantAdded` / `DescendantRemoving` on every root service.
+- When you change something, an export is **scheduled** to run after a short debounce (3 s by default).
+- If you do 10 edits in 2 seconds, only **one** export runs — at the end of the burst.
+- Quiet game = zero CPU, zero exports. Not a timer.
+- Minimum interval between auto-exports: 5 s.
+
+Combine Watch mode + `rotree mcp` and Claude always sees the current state, automatically, without you clicking anything.
 
 ## VS Code commands
 

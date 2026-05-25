@@ -17,6 +17,7 @@ export type Api = {
 	OnApplyPatch: () -> (),
 	OnPingBridge: () -> boolean,
 	OnSafeModeChanged: (boolean) -> (),
+	OnWatchModeChanged: (boolean) -> (),
 	OnThemeToggle: (boolean) -> (),
 }
 
@@ -106,6 +107,7 @@ function MainWindow.Build(parent: PluginGui, api: Api)
 	Components.Button(exports, "Export Remotes", "ghost", api.OnExportRemotes)
 	Components.Button(exports, "Export GUI", "ghost", api.OnExportGui)
 
+	Components.Toggle(exports, "Watch mode (auto-export on changes)", false, api.OnWatchModeChanged)
 	Components.Toggle(exports, "Safe Mode (redact sensitive sources)", false, api.OnSafeModeChanged)
 
 	-- Stats card

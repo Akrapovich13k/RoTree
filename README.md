@@ -17,6 +17,8 @@
 - Scans your full Roblox game tree (Workspace, ReplicatedStorage, ServerScriptService, GUI, Remotes, Tools, etc.)
 - Exports everything to a local `.rotree/` folder as readable JSON + Markdown
 - Generates a `CLAUDE_CONTEXT.md` so Claude understands your architecture
+- **MCP server** (`rotree mcp`): exposes the tree as tools so Claude Code / Claude Desktop / any MCP client can pull only what it needs (no token waste)
+- **Watch mode** in the Studio plugin: re-exports automatically when the DataModel changes (event-driven + debounced, never on a timer)
 - Compares Studio state with your Rojo project (if any)
 - Lets Claude propose patches that **you** review and apply manually
 
@@ -51,12 +53,19 @@ cd ~/MyRobloxGame
 rotree serve         # listens on http://localhost:34872
 ```
 
+In Roblox Studio: turn on **Watch mode** in the RoTree window. Now every change in your DataModel auto-exports — no clicking.
+
+**Hooking Claude Code / Claude Desktop (MCP):**
+```bash
+rotree mcp-config --cwd ~/MyRobloxGame
+```
+
+Copy the printed JSON into your MCP config. Claude now has tools like `rotree_get_script("ServerScriptService.Shop")` and `rotree_search("leaderstats")`. It pulls only what it needs.
+
 **From VS Code:**
 ```
 Command Palette → RoTree: Start Bridge
 ```
-
-Either way, in Roblox Studio click **RoTree → Export Game Tree**, and the export appears in `.rotree/` next to your code.
 
 ## Documentation
 

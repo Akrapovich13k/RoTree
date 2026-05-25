@@ -18,6 +18,7 @@
     "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --minify --outfile=dist/rotree.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@rotree/core": "*"
   },
   "devDependencies": {
