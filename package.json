@@ -1,7 +1,7 @@
 {
   "name": "rotree-monorepo",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "workspaces": ["core", "cli", "extension"],
   "scripts": {
     "build": "npm run build -w @rotree/core && npm run build -w @rotree/cli && npm run build -w rotree",

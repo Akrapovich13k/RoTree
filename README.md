@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────┐        HTTP POST          ┌──────────────────────────┐
-│  Roblox Studio          │   localhost:34872         │   rotree serve   (CLI)   │
+│  Roblox Studio          │   localhost:34873         │   rotree serve   (CLI)   │
 │  RoTree Plugin (Luau)   │ ────────────────────────► │         OR               │
 │  scans game tree        │                           │   RoTree (VS Code ext.)  │
 └─────────────────────────┘                           │   → writes .rotree/      │
@@ -61,7 +61,7 @@ Then in Roblox Studio you still need to install the plugin once — see [`docs/I
 **From a terminal, like Rojo:**
 ```bash
 cd ~/MyRobloxGame
-rotree serve         # listens on http://localhost:34872
+rotree serve         # listens on http://localhost:34873
 ```
 
 In Roblox Studio: turn on **Watch mode** in the RoTree window. Now every change in your DataModel auto-exports — no clicking.

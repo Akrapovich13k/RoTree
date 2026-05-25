@@ -43,7 +43,7 @@ Then in Roblox Studio:
 
 ### Enable HTTP requests
 
-Plugins talk to VS Code over `http://localhost:34872`. For that:
+Plugins talk to VS Code over `http://localhost:34873`. For that:
 
 1. **File → Game Settings → Security**
 2. Turn **Allow HTTP Requests** on
@@ -97,7 +97,7 @@ That's the equivalent of `rojo serve` — leave it running while you work in Stu
 
 | Command             | What it does                                                  |
 |---------------------|---------------------------------------------------------------|
-| `rotree serve`      | Start the bridge on `localhost:34872`                         |
+| `rotree serve`      | Start the bridge on `localhost:34873`                         |
 | `rotree mcp`        | Start the bridge + MCP server (Claude Code, Claude Desktop, …)|
 | `rotree mcp-install`| Auto-configure your AI client's MCP — no copy-pasting JSON.  |
 | `rotree build`      | Build `RoTree.rbxm` from `plugin/` (needs Rojo on PATH)       |
@@ -155,7 +155,7 @@ or:
 
 1. Open your Roblox game folder in VS Code
 2. Command Palette → **RoTree: Start Bridge**
-3. Status bar shows **🟢 RoTree: 34872**
+3. Status bar shows **🟢 RoTree: 34873**
 
 Then in Roblox Studio, click **RoTree → Export Game Tree**. You should see `.rotree/` appear in your workspace, populated with JSON + Markdown.
 
@@ -165,7 +165,7 @@ Then in Roblox Studio, click **RoTree → Export Game Tree**. You should see `.r
 |--------------------------------------------------|---------------------------------------------------------------------|
 | Plugin shows "Bridge offline"                    | Run `rotree serve` OR **RoTree: Start Bridge** in VS Code           |
 | Plugin shows "HTTP requests are not allowed"     | Enable in Game Settings → Security                                  |
-| Port 34872 is in use                             | `rotree serve --port 34900` (or change in VS Code settings) AND in plugin Config |
+| Port 34873 is in use                             | `rotree serve --port 34900` (or change in VS Code settings) AND in plugin Config |
 | `.rotree/` not created                           | Check VS Code has a workspace folder open                           |
 | Extension says "no workspace folder"             | Open a folder first (File → Open Folder)                            |
 

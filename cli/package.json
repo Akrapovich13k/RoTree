@@ -1,6 +1,6 @@
 {
   "name": "@rotree/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Local CLI for RoTree — run `rotree serve` to bridge Roblox Studio to your workspace.",
   "license": "MIT",
   "bin": {

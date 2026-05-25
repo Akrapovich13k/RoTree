@@ -39,7 +39,7 @@ export function registerCommands(ctx: vscode.ExtensionContext, deps: CommandDeps
   };
 
   register("rotree.startBridge", async () => {
-    const port = vscode.workspace.getConfiguration("rotree").get<number>("port", 34872);
+    const port = vscode.workspace.getConfiguration("rotree").get<number>("port", 34873);
     try {
       await deps.server.start(port);
       deps.onBridgeStateChanged(true, port);

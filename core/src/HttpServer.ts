@@ -14,7 +14,7 @@ import {
 import { ExportReader } from "./ExportReader";
 import { PatchManager } from "./PatchManager";
 
-export const ROTREE_VERSION = "0.1.1";
+export const ROTREE_VERSION = "0.1.2";
 export const ROTREE_MAJOR = "0";
 
 export type ExportHandler = (p: ExportPayload | BackupPayload) => Promise<void>;

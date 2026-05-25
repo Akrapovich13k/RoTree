@@ -26,7 +26,7 @@ RoTree is two programs talking over a localhost HTTP connection.
 │  └──────┬──────┘                            │
 │         ▼                                   │
 │  ┌──────────────┐                           │
-│  │ HttpBridge   │ ── POST localhost:34872 ──┼──┐
+│  │ HttpBridge   │ ── POST localhost:34873 ──┼──┐
 │  └──────────────┘                           │  │
 └──────────────────────────────────────────────┘  │
                                                   │
@@ -66,7 +66,7 @@ We pick HTTP localhost — same approach as [Rojo](https://rojo.space) — becau
 The plugin sends a single POST per export:
 
 ```
-POST http://localhost:34872/rotree/export
+POST http://localhost:34873/rotree/export
 Content-Type: application/json
 X-RoTree-Version: 0.1.0
 
@@ -89,7 +89,7 @@ The server splits this payload into the files documented in [`docs/USAGE.md`](US
 
 For patches, the reverse flow is:
 1. VS Code (or your AI via VS Code) writes `.rotree/patches/<id>.json`
-2. The plugin's "Apply Patch" button does `GET http://localhost:34872/rotree/patches/<id>`
+2. The plugin's "Apply Patch" button does `GET http://localhost:34873/rotree/patches/<id>`
 3. Studio shows a preview, asks confirmation, creates a backup, applies.
 
 ## File layout
@@ -150,7 +150,7 @@ The CLI and the extension are **thin shells** over `@rotree/core`. Same behavior
 |-------------------------------------|----------------------------------------------------|
 | `extension.ts`                      | Activation, command registration, server lifecycle |
 | `types.ts`                          | Shared TS interfaces matching the JSON payload     |
-| `server/HttpServer.ts`              | Listens on 34872, splits payload to files          |
+| `server/HttpServer.ts`              | Listens on 34873, splits payload to files          |
 | `services/ExportReader.ts`          | Loads files from `.rotree/` on demand              |
 | `services/ContextBuilder.ts`        | Builds `AI_CONTEXT.md`                         |
 | `services/RojoComparator.ts`        | Reads `default.project.json`, diffs vs export      |

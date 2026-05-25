@@ -91,7 +91,7 @@ function help(): void {
   console.log("  help         Show this help.");
   console.log("");
   console.log("Options:");
-  console.log("  --port <n>          Port to listen on (default 34872)");
+  console.log("  --port <n>          Port to listen on (default 34873)");
   console.log("  --cwd <dir>         Workspace root (default: current directory)");
   console.log("  --output <dir>      Subfolder for exports (default: .rotree)");
   console.log("");
@@ -110,7 +110,7 @@ async function commandMcp(args: ParsedArgs): Promise<void> {
   const exportFolderName =
     typeof args.flags.output === "string" ? args.flags.output : ".rotree";
   const port = parseInt(
-    typeof args.flags.port === "string" ? args.flags.port : "34872",
+    typeof args.flags.port === "string" ? args.flags.port : "34873",
     10,
   );
   const noServe = args.flags["no-serve"] === true;
@@ -268,7 +268,7 @@ function buildContext(args: ParsedArgs): {
 async function commandServe(args: ParsedArgs): Promise<void> {
   banner();
   const port = parseInt(
-    typeof args.flags.port === "string" ? args.flags.port : "34872",
+    typeof args.flags.port === "string" ? args.flags.port : "34873",
     10,
   );
   const { workspaceRoot, reader, patches } = buildContext(args);

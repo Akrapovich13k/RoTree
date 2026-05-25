@@ -30,7 +30,7 @@ rotree help               Show usage
 
 | Flag             | Default   | Purpose                                  |
 |------------------|-----------|------------------------------------------|
-| `--port <n>`     | `34872`   | Port for the bridge (serve)              |
+| `--port <n>`     | `34873`   | Port for the bridge (serve)              |
 | `--cwd <dir>`    | `$PWD`    | Workspace root                           |
 | `--output <dir>` | `.rotree` | Export subfolder                         |
 | `--plugin <dir>` | `./plugin`| Plugin source dir (build)                |
@@ -44,9 +44,9 @@ $ rotree serve
 RoTree v0.1.0
 12:34:56 info workspace: /home/me/MyRobloxGame
 12:34:56 info writing to .rotree
-12:34:56 info bridge listening on http://localhost:34872
+12:34:56 info bridge listening on http://localhost:34873
 
-✓ bridge ready · http://localhost:34872
+✓ bridge ready · http://localhost:34873
 Open Roblox Studio, click RoTree → Export Game Tree.
 Press Ctrl+C to stop.
 

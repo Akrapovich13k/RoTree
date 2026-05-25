@@ -6,7 +6,7 @@ RoTree's job is to give your AI visibility, not authority. This file lists every
 
 ### 1. No outbound internet from the plugin
 
-The plugin only makes HTTP requests to `http://localhost:<port>`. The default port is `34872`. The URL is built in a single file (`plugin/src/Config.luau`) and used by exactly one module (`plugin/src/Services/HttpBridge.luau`). Audit either to verify.
+The plugin only makes HTTP requests to `http://localhost:<port>`. The default port is `34873`. The URL is built in a single file (`plugin/src/Config.luau`) and used by exactly one module (`plugin/src/Services/HttpBridge.luau`). Audit either to verify.
 
 ### 2. No API keys in the plugin
 
@@ -71,7 +71,7 @@ Their **paths** still appear in `game-tree.json` (so your AI can reason about st
 ## What's NOT protected (be aware)
 
 - Your scripts' source code, by default, is exported. If you don't want the AI to see anti-cheat logic, add it to `.rotreeignore`.
-- The HTTP bridge accepts any local process on your machine. If another program on your machine sends a POST to `localhost:34872`, the extension will write the data. Mitigation: the extension validates payload shape and version; in practice, a malicious local process can already do worse things.
+- The HTTP bridge accepts any local process on your machine. If another program on your machine sends a POST to `localhost:34873`, the extension will write the data. Mitigation: the extension validates payload shape and version; in practice, a malicious local process can already do worse things.
 
 ## Auditing the plugin
 

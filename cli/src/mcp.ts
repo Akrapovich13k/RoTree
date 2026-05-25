@@ -362,7 +362,7 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
         if (level !== "info") dbg(`[${level}] ${msg}`);
       },
     });
-    const port = opts.port ?? 34872;
+    const port = opts.port ?? 34873;
     try {
       await httpServer.start(port);
       dbg(`bridge listening on http://localhost:${port}`);

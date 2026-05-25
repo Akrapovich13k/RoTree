@@ -40,6 +40,6 @@ src/
 
 | Setting                  | Default   | What it does                                |
 |--------------------------|-----------|---------------------------------------------|
-| `rotree.port`            | `34872`   | Localhost port for the bridge               |
+| `rotree.port`            | `34873`   | Localhost port for the bridge               |
 | `rotree.autoStartBridge` | `true`    | Start the server when a workspace opens     |
 | `rotree.exportFolder`    | `.rotree` | Where to write exports inside the workspace |

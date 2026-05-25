@@ -7,6 +7,20 @@ All notable changes to RoTree are listed here. The repo follows
 
 _(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
 
+## v0.1.2 — 2026-05-25
+
+### Fixed
+- **Port collision with Rojo** — `rotree`'s default port moved from
+  `34872` (which Rojo also uses) to **`34873`**, so the two tools can
+  run side-by-side without stealing each other's POSTs.
+
+### Breaking
+- Old plugins built from v0.1.0/v0.1.1 still try to reach port 34872.
+  After upgrading the CLI, **rebuild and reinstall `RoTree.rbxm`** from
+  the v0.1.2 release (the rebuilt plugin defaults to 34873). Or, as a
+  one-time workaround, keep the old plugin and run
+  `rotree mcp --port 34872`.
+
 ## v0.1.1 — 2026-05-25
 
 ### Added

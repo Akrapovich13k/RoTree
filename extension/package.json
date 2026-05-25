@@ -2,7 +2,7 @@
   "name": "rotree",
   "displayName": "RoTree",
   "description": "Roblox Game Tree Bridge — read Roblox Studio from VS Code, so your AI can understand your game.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "rotree",
   "license": "MIT",
   "engines": {
@@ -52,7 +52,7 @@
       "properties": {
         "rotree.port": {
           "type": "number",
-          "default": 34872,
+          "default": 34873,
           "description": "Local HTTP port for the Studio bridge."
         },
         "rotree.autoStartBridge": {

@@ -1,6 +1,6 @@
 # RoTree plugin (Roblox Studio)
 
-Luau source for the RoTree Studio plugin. Talks to the VS Code extension over `http://localhost:34872`.
+Luau source for the RoTree Studio plugin. Talks to the VS Code extension over `http://localhost:34873`.
 
 ## Build with Rojo
 
