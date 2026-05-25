@@ -86,6 +86,7 @@ function help(): void {
   console.log("  compare      Diff the Studio export against your default.project.json.");
   console.log("  init         Scaffold a .rotreeignore in the current directory.");
   console.log("  mcp-config   Print a config snippet for Claude Code / Claude Desktop.");
+  console.log("  mcp-install  Auto-write that snippet into your AI client's config (no copy-paste).");
   console.log("  version      Print the RoTree version.");
   console.log("  help         Show this help.");
   console.log("");
@@ -133,9 +134,100 @@ function commandMcpConfig(args: ParsedArgs): void {
   console.log("");
   console.log(JSON.stringify(config, null, 2));
   console.log("");
-  console.log(color(DIM, "Claude Code: ~/.claude/mcp.json (or your project's .mcp.json)"));
-  console.log(color(DIM, "Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)"));
-  console.log(color(DIM, "                 %APPDATA%\\Claude\\claude_desktop_config.json (Windows)"));
+  console.log(color(DIM, "Or skip the copy-paste entirely:  rotree mcp-install"));
+  console.log("");
+}
+
+// ── Resolve the well-known MCP config file paths for each client. ─────
+function claudeDesktopConfigPath(): string {
+  const home = require("os").homedir();
+  if (process.platform === "darwin") {
+    return path.join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json");
+  }
+  if (process.platform === "win32") {
+    const appdata = process.env.APPDATA || path.join(home, "AppData", "Roaming");
+    return path.join(appdata, "Claude", "claude_desktop_config.json");
+  }
+  return path.join(home, ".config", "Claude", "claude_desktop_config.json");
+}
+
+function claudeCodeUserConfigPath(): string {
+  const home = require("os").homedir();
+  return path.join(home, ".claude.json");
+}
+
+function claudeCodeProjectConfigPath(cwd: string): string {
+  return path.join(cwd, ".mcp.json");
+}
+
+async function patchMcpConfigFile(file: string, serverName: string, entry: Record<string, unknown>): Promise<"created" | "updated" | "unchanged"> {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  let existing: any = {};
+  try {
+    existing = JSON.parse(await fs.readFile(file, "utf8"));
+  } catch {
+    // file doesn't exist or is invalid — start fresh
+    existing = {};
+  }
+  if (!existing.mcpServers || typeof existing.mcpServers !== "object") {
+    existing.mcpServers = {};
+  }
+  const prev = JSON.stringify(existing.mcpServers[serverName] ?? null);
+  const next = JSON.stringify(entry);
+  if (prev === next) return "unchanged";
+  // Backup once
+  try {
+    await fs.copyFile(file, file + ".rotree-backup");
+  } catch {
+    // file might not exist — that's fine, the next write creates it
+  }
+  existing.mcpServers[serverName] = entry;
+  await fs.writeFile(file, JSON.stringify(existing, null, 2) + "\n", "utf8");
+  return prev === "null" ? "created" : "updated";
+}
+
+async function commandMcpInstall(args: ParsedArgs): Promise<void> {
+  const cwd = typeof args.flags.cwd === "string"
+    ? path.resolve(args.flags.cwd)
+    : process.cwd();
+  const client = (typeof args.flags.client === "string" ? args.flags.client : "all").toLowerCase();
+  const name = typeof args.flags.name === "string" ? args.flags.name : "rotree";
+
+  const entry: Record<string, unknown> = {
+    command: "rotree",
+    args: ["mcp", "--cwd", cwd],
+  };
+
+  banner();
+  log("info", `workspace: ${color(CYAN, cwd)}`);
+
+  const targets: { label: string; file: string }[] = [];
+  if (client === "all" || client === "claude-desktop") {
+    targets.push({ label: "Claude Desktop", file: claudeDesktopConfigPath() });
+  }
+  if (client === "all" || client === "claude-code-user") {
+    targets.push({ label: "Claude Code (user)", file: claudeCodeUserConfigPath() });
+  }
+  if (client === "all" || client === "claude-code" || client === "claude-code-project") {
+    targets.push({ label: "Claude Code (project .mcp.json)", file: claudeCodeProjectConfigPath(cwd) });
+  }
+
+  for (const t of targets) {
+    try {
+      const status = await patchMcpConfigFile(t.file, name, entry);
+      if (status === "unchanged") {
+        log("info", `${t.label}: already configured (${t.file})`);
+      } else {
+        log("info", `${t.label}: ${status} ${color(CYAN, t.file)}`);
+      }
+    } catch (err) {
+      log("warn", `${t.label}: ${(err as Error).message}`);
+    }
+  }
+
+  console.log("");
+  console.log(color(BOLD, "Done. Restart your AI client and you'll see the rotree tools."));
+  console.log(color(DIM, "Re-run with --cwd <other dir> per project, or --client claude-desktop to target one."));
   console.log("");
 }
 
@@ -338,6 +430,9 @@ async function main(): Promise<void> {
       return;
     case "mcp-config":
       commandMcpConfig(args);
+      return;
+    case "mcp-install":
+      await commandMcpInstall(args);
       return;
     case "context":
       await commandContext(args);

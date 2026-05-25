@@ -14,19 +14,24 @@
 
 ## What it does
 
-- Scans your full Roblox game tree (Workspace, ReplicatedStorage, ServerScriptService, GUI, Remotes, Tools, etc.)
-- Exports everything to a local `.rotree/` folder as readable JSON + Markdown
-- Generates a `AI_CONTEXT.md` so your AI understands your architecture
-- **MCP server** (`rotree mcp`): exposes the tree as tools so Claude Code / Claude Desktop / any MCP client / any MCP client can pull only what it needs (no token waste)
-- **Watch mode** in the Studio plugin: re-exports automatically when the DataModel changes (event-driven + debounced, never on a timer)
-- Compares Studio state with your Rojo project (if any)
-- Lets your AI propose patches that **you** review and apply manually
+- **Full game tree export** — Workspace, ReplicatedStorage, ServerScriptService, GUI, Remotes, Tools, Tags, Attributes, every Instance class.
+- **All properties captured** — ~50 ClassNames covered with inheritance (BaseParts, GUI, Lights, Sounds, Constraints, Particles, Humanoid, Camera, Workspace settings, UI helpers, Value objects…).
+- **`AI_CONTEXT.md`** — auto-generated Markdown summary your AI reads first to understand your architecture.
+- **MCP server** (`rotree mcp`) — 17 tools so Claude Code / Claude Desktop / Codex / any MCP client pulls **only what it needs** (no token waste).
+- **Watch mode** — re-exports automatically when the DataModel changes (event-driven + debounced, never on a timer).
+- **Studio Output stream** — the plugin captures `LogService.MessageOut` (Print, Info, Warning, Error) and the AI can read it on demand via `rotree_get_output`.
+- **AI can modify the game** (opt-in) — create / modify / delete any Instance via `rotree_apply_patch`. Critical paths (DataStore, leaderstats, MarketplaceService, anti-cheat) are always refused.
+- **Backup before every patch** + Ctrl+Z support via `ChangeHistoryService`.
+- **Rojo-aware** — diffs Studio state against your `default.project.json`.
+- **`.rotreeignore`** — hide sensitive scripts/folders from the AI; `critical:` prefix elevates to double-confirm.
+
+Full list and history: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## What it never does
 
 - ❌ Send your game over the internet
 - ❌ Store API keys in the plugin
-- ❌ Modify your game without an explicit click + confirmation
+- ❌ Modify your game without your toggle being on (and never for critical systems)
 - ❌ Touch DataStores, leaderstats, purchases without a special warning
 
 ## Install

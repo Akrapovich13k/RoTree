@@ -25,13 +25,33 @@ fail()  { printf "  \033[31m✗\033[0m %s\n" "$1" >&2; exit 1; }
 bold "RoTree installer"
 echo
 
-# 1. Check Node.js
+# 1. Check Node.js — with friendly install hints per platform if missing.
 if ! command -v node >/dev/null 2>&1; then
-  fail "Node.js 18+ is required but was not found. Install it first: https://nodejs.org"
+  printf "\n"
+  warn "Node.js 18+ is required and was not found on your PATH."
+  printf "\n"
+  printf "  Pick whichever fits your system:\n"
+  if [ "$(uname)" = "Darwin" ]; then
+    printf "    \033[36mbrew install node\033[0m                # macOS, Homebrew\n"
+  fi
+  if command -v apt-get >/dev/null 2>&1; then
+    printf "    \033[36msudo apt-get install -y nodejs\033[0m   # Debian/Ubuntu\n"
+  fi
+  if command -v dnf >/dev/null 2>&1; then
+    printf "    \033[36msudo dnf install -y nodejs\033[0m       # Fedora/RHEL\n"
+  fi
+  if command -v pacman >/dev/null 2>&1; then
+    printf "    \033[36msudo pacman -S nodejs\033[0m            # Arch\n"
+  fi
+  printf "    \033[36mcurl -fsSL https://fnm.vercel.app/install | bash && fnm install 20\033[0m\n"
+  printf "                                          # any platform, no root\n"
+  printf "    Or download the installer from https://nodejs.org\n"
+  printf "\n"
+  fail "Re-run this script once Node.js is on your PATH."
 fi
 NODE_MAJOR=$(node -p "process.versions.node.split('.')[0]")
 if [ "$NODE_MAJOR" -lt 18 ]; then
-  fail "Node.js 18+ is required (you have $(node --version))."
+  fail "Node.js 18+ is required (you have $(node --version)). Upgrade and re-run."
 fi
 ok "Node.js $(node --version) detected."
 
@@ -73,15 +93,36 @@ fi
 echo
 if echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
   ok "$INSTALL_DIR is on your PATH."
-  echo
-  bold "Try it:"
-  printf "  rotree help\n  rotree serve\n"
 else
   warn "$INSTALL_DIR is NOT on your PATH yet."
   echo
   bold "Add this to your shell config (~/.bashrc, ~/.zshrc, etc.):"
   printf "  export PATH=\"%s:\$PATH\"\n" "$INSTALL_DIR"
   echo
-  bold "Then reload your shell and run:"
-  printf "  rotree help\n"
+fi
+
+# 7. Offer to auto-configure the AI client's MCP.
+# Skipped when piped from curl (no TTY) — print a nudge instead.
+echo
+if [ -t 0 ] && [ -t 1 ]; then
+  bold "Configure your AI client (Claude Code / Claude Desktop) now? [y/N]"
+  read -r REPLY
+  case "$REPLY" in
+    [yY]|[yY][eE][sS])
+      if "$TARGET" mcp-install --cwd "$PWD"; then
+        ok "MCP configured for $PWD"
+      else
+        warn "mcp-install returned non-zero. You can re-run it later: rotree mcp-install"
+      fi
+      ;;
+    *)
+      info "Skipped. To configure later: rotree mcp-install --cwd <your-roblox-project>"
+      ;;
+  esac
+else
+  echo
+  bold "Next:"
+  printf "  cd <your-roblox-project>\n"
+  printf "  rotree mcp-install        # auto-configures Claude Code / Desktop\n"
+  printf "  rotree mcp                # start the bridge + MCP server\n"
 fi

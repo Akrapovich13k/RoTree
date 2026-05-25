@@ -95,13 +95,34 @@ rotree serve
 
 That's the equivalent of `rojo serve` — leave it running while you work in Studio. Press Ctrl+C to stop.
 
-| Command           | What it does                                                  |
-|-------------------|---------------------------------------------------------------|
-| `rotree serve`    | Start the bridge on `localhost:34872`                         |
-| `rotree build`    | Build `RoTree.rbxm` from `plugin/` (needs Rojo on PATH)       |
-| `rotree init`     | Scaffold a `.rotreeignore` in the current directory           |
-| `rotree context`  | Regenerate `.rotree/AI_CONTEXT.md` from the last export   |
-| `rotree compare`  | Print the Rojo ↔ Studio diff                                  |
+| Command             | What it does                                                  |
+|---------------------|---------------------------------------------------------------|
+| `rotree serve`      | Start the bridge on `localhost:34872`                         |
+| `rotree mcp`        | Start the bridge + MCP server (Claude Code, Claude Desktop, …)|
+| `rotree mcp-install`| Auto-configure your AI client's MCP — no copy-pasting JSON.  |
+| `rotree build`      | Build `RoTree.rbxm` from `plugin/` (needs Rojo on PATH)       |
+| `rotree init`       | Scaffold a `.rotreeignore` in the current directory           |
+| `rotree context`    | Regenerate `.rotree/AI_CONTEXT.md` from the last export       |
+| `rotree compare`    | Print the Rojo ↔ Studio diff                                  |
+
+### Auto-configure your AI client (no JSON copy-paste)
+
+```bash
+cd ~/MyRobloxGame
+rotree mcp-install
+```
+
+That patches the MCP config for both Claude Desktop and Claude Code (project `.mcp.json` + user `~/.claude.json`) in one shot. It's idempotent (safe to re-run), it merges with any other MCP servers you already have, and it makes a `.rotree-backup` copy of the file before touching it.
+
+Restart your AI client → the `rotree_*` tools appear.
+
+Target one client only:
+
+```bash
+rotree mcp-install --client claude-desktop
+rotree mcp-install --client claude-code
+rotree mcp-install --client claude-code-user
+```
 
 Use `--port <n>`, `--cwd <dir>`, `--output <dir>` to override defaults.
 
