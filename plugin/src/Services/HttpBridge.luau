@@ -7,6 +7,20 @@ local Config = require(script.Parent.Parent.Config)
 
 local HttpBridge = {}
 
+local function safeNumber(value: number): number | string
+	if value ~= value or value == math.huge or value == -math.huge then
+		return tostring(value)
+	end
+	return value
+end
+
+local function canJsonEncode(value: any): boolean
+	local ok = pcall(function()
+		HttpService:JSONEncode(value)
+	end)
+	return ok
+end
+
 local function sanitizeForJson(value: any, seen: { [any]: boolean }?): any
 	local valueType = typeof(value)
 
@@ -15,40 +29,43 @@ local function sanitizeForJson(value: any, seen: { [any]: boolean }?): any
 	end
 
 	if valueType == "number" then
-		if value ~= value or value == math.huge or value == -math.huge then
-			return tostring(value)
-		end
-		return value
+		return safeNumber(value)
 	end
 
-	if valueType == "Vector3" then return { x = value.X, y = value.Y, z = value.Z } end
-	if valueType == "Vector2" then return { x = value.X, y = value.Y } end
-	if valueType == "Color3" then return { r = value.R, g = value.G, b = value.B } end
+	if valueType == "Vector3" then return { x = safeNumber(value.X), y = safeNumber(value.Y), z = safeNumber(value.Z) } end
+	if valueType == "Vector2" then return { x = safeNumber(value.X), y = safeNumber(value.Y) } end
+	if valueType == "Color3" then return { r = safeNumber(value.R), g = safeNumber(value.G), b = safeNumber(value.B) } end
 	if valueType == "BrickColor" then return { name = value.Name, number = value.Number } end
-	if valueType == "UDim" then return { scale = value.Scale, offset = value.Offset } end
+	if valueType == "UDim" then return { scale = safeNumber(value.Scale), offset = safeNumber(value.Offset) } end
 	if valueType == "UDim2" then
 		return {
-			x = { scale = value.X.Scale, offset = value.X.Offset },
-			y = { scale = value.Y.Scale, offset = value.Y.Offset },
+			x = { scale = safeNumber(value.X.Scale), offset = safeNumber(value.X.Offset) },
+			y = { scale = safeNumber(value.Y.Scale), offset = safeNumber(value.Y.Offset) },
 		}
 	end
-	if valueType == "CFrame" then return { components = { value:GetComponents() } } end
-	if valueType == "Vector3int16" then return { x = value.X, y = value.Y, z = value.Z } end
-	if valueType == "Vector2int16" then return { x = value.X, y = value.Y } end
+	if valueType == "CFrame" then
+		local components = { value:GetComponents() }
+		for index, component in components do
+			components[index] = safeNumber(component)
+		end
+		return { components = components }
+	end
+	if valueType == "Vector3int16" then return { x = safeNumber(value.X), y = safeNumber(value.Y), z = safeNumber(value.Z) } end
+	if valueType == "Vector2int16" then return { x = safeNumber(value.X), y = safeNumber(value.Y) } end
 	if valueType == "Rect" then
 		return {
-			min = { x = value.Min.X, y = value.Min.Y },
-			max = { x = value.Max.X, y = value.Max.Y },
+			min = { x = safeNumber(value.Min.X), y = safeNumber(value.Min.Y) },
+			max = { x = safeNumber(value.Max.X), y = safeNumber(value.Max.Y) },
 		}
 	end
-	if valueType == "NumberRange" then return { min = value.Min, max = value.Max } end
+	if valueType == "NumberRange" then return { min = safeNumber(value.Min), max = safeNumber(value.Max) } end
 	if valueType == "NumberSequence" then
 		local keypoints = {}
 		for _, keypoint in value.Keypoints do
 			table.insert(keypoints, {
-				time = keypoint.Time,
-				value = keypoint.Value,
-				envelope = keypoint.Envelope,
+				time = safeNumber(keypoint.Time),
+				value = safeNumber(keypoint.Value),
+				envelope = safeNumber(keypoint.Envelope),
 			})
 		end
 		return { keypoints = keypoints }
@@ -57,7 +74,7 @@ local function sanitizeForJson(value: any, seen: { [any]: boolean }?): any
 		local keypoints = {}
 		for _, keypoint in value.Keypoints do
 			table.insert(keypoints, {
-				time = keypoint.Time,
+				time = safeNumber(keypoint.Time),
 				value = sanitizeForJson(keypoint.Value, seen),
 			})
 		end
@@ -109,6 +126,64 @@ local function sanitizeForJson(value: any, seen: { [any]: boolean }?): any
 	return tostring(value)
 end
 
+local function coerceJsonSafe(value: any, seen: { [any]: boolean }?): any
+	if canJsonEncode(value) then
+		return value
+	end
+
+	if typeof(value) ~= "table" then
+		return tostring(value)
+	end
+
+	seen = seen or {}
+	if seen[value] then
+		return "[Circular]"
+	end
+	seen[value] = true
+
+	local output = {}
+	for key, childValue in value do
+		local safeKey = tostring(key)
+		local safeChild = coerceJsonSafe(childValue, seen)
+		if safeChild == nil then
+			safeChild = "[nil]"
+		end
+		output[safeKey] = safeChild
+	end
+
+	seen[value] = nil
+
+	if canJsonEncode(output) then
+		return output
+	end
+
+	return tostring(value)
+end
+
+local function encodeJsonBody(body: any?): (boolean, string?, string?)
+	if body == nil then
+		return true, nil, nil
+	end
+
+	local sanitized = sanitizeForJson(body)
+	local ok, encoded = pcall(function()
+		return HttpService:JSONEncode(sanitized)
+	end)
+	if ok then
+		return true, encoded, nil
+	end
+
+	local forced = coerceJsonSafe(sanitized)
+	local forcedOk, forcedEncoded = pcall(function()
+		return HttpService:JSONEncode(forced)
+	end)
+	if forcedOk then
+		return true, forcedEncoded, nil
+	end
+
+	return false, nil, tostring(forcedEncoded)
+end
+
 local function headers()
 	return {
 		["Content-Type"] = "application/json",
@@ -123,12 +198,17 @@ local function request(method: string, path: string, body: any?): (boolean, any)
 		return false, "RoTree refused a non-localhost URL: " .. url
 	end
 
+	local encodedOk, encodedBody, encodedErr = encodeJsonBody(body)
+	if not encodedOk then
+		return false, "JSON encode failed after sanitizing payload: " .. tostring(encodedErr)
+	end
+
 	local ok, response = pcall(function()
 		return HttpService:RequestAsync({
 			Url = url,
 			Method = method,
 			Headers = headers(),
-			Body = if body ~= nil then HttpService:JSONEncode(sanitizeForJson(body)) else nil,
+			Body = encodedBody,
 		})
 	end)
 
