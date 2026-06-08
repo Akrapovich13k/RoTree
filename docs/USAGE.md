@@ -76,7 +76,7 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 | `rotree help`       | Show usage.                                                     |
 
 All commands accept `--cwd <dir>` and `--output <dir>`; `serve` also takes `--port <n>`.
-`compare`/`mcp` accept `--rojo-project <path>` (a `*.project.json` file or its folder; also `ROTREE_ROJO_PROJECT`) — use it when your Rojo code lives somewhere other than the export folder. `mcp` also accepts `--stale-days <n>` (default 3) to control when `rotree_status` flags an export as stale.
+`compare`/`mcp` accept `--rojo-project <path>` (a `*.project.json` file or its folder; also `ROTREE_ROJO_PROJECT`) — use it when your Rojo code lives somewhere other than the export folder. `mcp-config`/`mcp-install` accept the same flag and bake it into the generated MCP config, so your AI client launches the server already pointed at the right project. Otherwise the project is auto-discovered around `--cwd` (workspace root, parent dirs, then nested sub-folders). `mcp` also accepts `--stale-days <n>` (default 3) to control when `rotree_status` flags an export as stale.
 
 ## MCP tools (what the AI can call)
 
@@ -97,7 +97,7 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 | `rotree_clear_output` | Wipe the buffered output (bridge side only — does not touch Studio's panel). |
 | `rotree_get_attributes` | Instance attributes. `instancePath` = one instance + its subtree (like `rotree_get_instance`); `keyPrefix` = filter by attribute key name. (`path` is a deprecated alias for `instancePath`.) |
 | `rotree_get_tags`     | Compact `{ tag: count }` summary by default. `tag` (exact or prefix) returns that tag's paths; `limit`/`offset` paginate. |
-| `rotree_get_instance` | **Full property bag** for one instance (Position, Color, Material, Text, Source, attributes, tags…). |
+| `rotree_get_instance` | **Full property bag** for one instance (Position, Color, Material, Text, Source, attributes, tags…). The child tree is bounded by `maxDepth` (default 1) and `maxChildren` (default 50) so a big Model/Folder stays cheap. |
 | `rotree_get_properties` | Bulk properties by path prefix.                                 |
 | `rotree_rojo_compare` | Diff vs your Rojo project (auto-discovered, or `--rojo-project`). Lists where it searched if none is found. |
 | `rotree_write_patch`  | Save a patch into `.rotree/patches/`. **Does not apply it.**      |

@@ -2,6 +2,8 @@
 // than inline in the MCP handlers) so they can be unit-tested without spinning
 // up a server or touching the filesystem.
 
+import { TreeNode } from "./types";
+
 export type TagMap = Record<string, string[]>;
 export type AttributeMap = Record<string, Record<string, unknown>>;
 
@@ -160,4 +162,63 @@ export function describeAge(iso: string, now: Date = new Date()): AgeDescription
   else human = `${days} days ago`;
 
   return { ms, days, human };
+}
+
+export interface TreeBound {
+  /**
+   * Maximum depth of `children` to keep. `0` drops every child and reports the
+   * count via `_truncated`; `1` keeps the direct children only; and so on.
+   */
+  maxDepth: number;
+  /**
+   * Cap on the number of direct children kept at each node. When a node has
+   * more, the extras are dropped and reported via `_childrenOmitted` /
+   * `_childCount`. Undefined means no width cap.
+   */
+  maxChildren?: number;
+}
+
+/** A {@link TreeNode} plus the annotations {@link boundTreeNode} may attach. */
+export type BoundedTreeNode = TreeNode & {
+  /** Direct children dropped because `maxDepth` was reached. */
+  _truncated?: number;
+  /** Direct children dropped because the `maxChildren` cap was exceeded. */
+  _childrenOmitted?: number;
+  /** Total number of direct children before the `maxChildren` cap. */
+  _childCount?: number;
+};
+
+/**
+ * Return a depth- and width-bounded copy of a tree node so a single MCP
+ * response can never serialize an entire subtree.
+ *
+ * - `rotree_get_tree` uses it with `maxDepth` only (no width cap) — output is
+ *   identical to the previous inline truncation.
+ * - `rotree_get_instance` uses it with a small `maxDepth` plus a `maxChildren`
+ *   cap, so asking for one big Model/Folder stays cheap.
+ *
+ * Leaf nodes and nodes already within the limits are returned unchanged (a
+ * shallow copy). The original node is never mutated.
+ */
+export function boundTreeNode(node: TreeNode, bound: TreeBound): BoundedTreeNode {
+  const { maxDepth, maxChildren } = bound;
+  const out: BoundedTreeNode = { ...node };
+  const kids = node.children;
+
+  if (!kids || kids.length === 0) return out;
+
+  if (maxDepth <= 0) {
+    out._truncated = kids.length;
+    delete out.children;
+    return out;
+  }
+
+  let kept = kids;
+  if (typeof maxChildren === "number" && maxChildren >= 0 && kids.length > maxChildren) {
+    kept = kids.slice(0, maxChildren);
+    out._childrenOmitted = kids.length - maxChildren;
+    out._childCount = kids.length;
+  }
+  out.children = kept.map((c) => boundTreeNode(c, { maxDepth: maxDepth - 1, maxChildren }));
+  return out;
 }

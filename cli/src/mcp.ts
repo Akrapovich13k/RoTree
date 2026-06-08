@@ -25,6 +25,7 @@ import {
   selectTagPaths,
   filterAttributes,
   describeAge,
+  boundTreeNode,
 } from "@rotree/core";
 
 const TOOLS = [
@@ -202,7 +203,7 @@ const TOOLS = [
   {
     name: "rotree_rojo_compare",
     description:
-      "Diff the Studio export against your Rojo project. The project file is taken from the server's --rojo-project option if set, otherwise auto-discovered (workspace root, then parent directories, then immediate sub-folders). Returns { projectFile, onlyInStudio, onlyInRojo, differentSource }. When no project is found, the result lists every location that was searched so you can point the server at the right one.",
+      "Diff the Studio export against your Rojo project. The project file is taken from the server's --rojo-project option if set, otherwise auto-discovered (workspace root, then parent directories, then nested sub-folders). Returns { projectFile, onlyInStudio, onlyInRojo, differentSource }. When no project is found, the result lists every location that was searched plus a hint to pass --rojo-project (or set ROTREE_ROJO_PROJECT) so you can point the server at the right one.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -249,11 +250,26 @@ const TOOLS = [
   {
     name: "rotree_get_instance",
     description:
-      "Return ALL captured properties for a single instance: tree node info, attributes, and the full property bag (Position, Size, Color, Material, Text, Source, etc.). Use this when you need to know every property of one specific object.",
+      "Return ALL captured properties for a single instance: tree node info, attributes, tags, and the full property bag (Position, Size, Color, Material, Text, Source, etc.) — for that ONE instance only (descendant properties are NOT included). " +
+      "Use this when you need every property of one specific object. " +
+      "The structural `node.children` list is depth-bounded by `maxDepth` (default 1 — the target plus its direct children) and width-capped by `maxChildren` (default 50), so asking for a big Model/Folder stays cheap. Omitted children are reported via `_truncated` (depth) and `_childrenOmitted`/`_childCount` (width).",
     inputSchema: {
       type: "object",
       properties: {
         path: { type: "string", description: "Dot-separated fullPath, e.g. 'Workspace.Shop.Trigger'." },
+        maxDepth: {
+          type: "integer",
+          minimum: 0,
+          maximum: 10,
+          description:
+            "How deep to include the children tree (names + className only). Default 1. Use 0 for the target node alone.",
+        },
+        maxChildren: {
+          type: "integer",
+          minimum: 1,
+          maximum: 1000,
+          description: "Cap on direct children listed per node before truncating. Default 50.",
+        },
       },
       required: ["path"],
       additionalProperties: false,
@@ -368,21 +384,6 @@ function findInTree(nodes: TreeNode[], targetPath: string): TreeNode | null {
     current = next;
   }
   return current;
-}
-
-function truncateTree(node: TreeNode, depth: number): TreeNode {
-  const out: TreeNode = { ...node };
-  if (depth <= 0) {
-    if (node.children && node.children.length > 0) {
-      (out as TreeNode & { _truncated?: number })._truncated = node.children.length;
-      delete out.children;
-    }
-    return out;
-  }
-  if (out.children) {
-    out.children = out.children.map((c) => truncateTree(c, depth - 1));
-  }
-  return out;
 }
 
 interface McpServerOptions {
@@ -533,11 +534,11 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
           const targetPath = typeof args.path === "string" ? args.path : undefined;
           const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : 3;
           if (!targetPath) {
-            return jsonResult(tree.map((n) => truncateTree(n, maxDepth)));
+            return jsonResult(tree.map((n) => boundTreeNode(n, { maxDepth })));
           }
           const node = findInTree(tree, targetPath);
           if (!node) return textResult(`path not found: ${targetPath}`);
-          return jsonResult(truncateTree(node, maxDepth));
+          return jsonResult(boundTreeNode(node, { maxDepth }));
         }
 
         case "rotree_list_scripts": {
@@ -765,8 +766,10 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
         case "rotree_get_instance": {
           const target = String(args.path ?? "");
           if (!target) return textResult("path is required");
+          const maxDepth = typeof args.maxDepth === "number" ? args.maxDepth : 1;
+          const maxChildren = typeof args.maxChildren === "number" ? args.maxChildren : 50;
           const tree = (await reader.tree()) ?? [];
-          const node = findInTree(tree, target);
+          const rawNode = findInTree(tree, target);
           const properties = (await reader.readJson<Record<string, Record<string, unknown>>>(
             "instance-properties.json",
           )) ?? {};
@@ -789,9 +792,13 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
           const scriptEntry = scripts.find((s) => s.fullPath === target);
           if (scriptEntry) source = scriptEntry.source;
 
+          // Bound the structural subtree so a large container can't blow the
+          // token budget — the properties below are for the target only anyway.
+          const node = rawNode ? boundTreeNode(rawNode, { maxDepth, maxChildren }) : null;
+
           return jsonResult({
             path: target,
-            found: node !== null || properties[target] !== undefined,
+            found: rawNode !== null || properties[target] !== undefined,
             node,
             properties: properties[target] ?? {},
             attributes: attributes[target] ?? {},

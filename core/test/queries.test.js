@@ -9,7 +9,13 @@ const {
   selectTagPaths,
   filterAttributes,
   describeAge,
+  boundTreeNode,
 } = require("../out/queries.js");
+
+// Minimal TreeNode factory — boundTreeNode only ever touches `children`.
+function n(name, children) {
+  return { name, className: "Folder", fullPath: name, isPart: false, children };
+}
 
 test("summarizeTags returns { tag: count } and totals", () => {
   const tags = {
@@ -103,4 +109,51 @@ test("describeAge formats elapsed time and returns null for garbage", () => {
   assert.equal(fourDays.days, 4);
   assert.equal(fourDays.human, "4 days ago");
   assert.equal(describeAge("not-a-date", base), null);
+});
+
+test("boundTreeNode keeps direct children but truncates beyond maxDepth", () => {
+  const tree = n("Root", [n("Child", [n("Grand", [])])]);
+  const b = boundTreeNode(tree, { maxDepth: 1 });
+  assert.equal(b.name, "Root");
+  assert.equal(b.children.length, 1);
+  const child = b.children[0];
+  assert.equal(child.name, "Child");
+  assert.equal(child.children, undefined); // grandchildren cut...
+  assert.equal(child._truncated, 1); // ...and counted
+});
+
+test("boundTreeNode with maxDepth 0 drops children but keeps the count", () => {
+  const tree = n("Root", [n("A", []), n("B", [])]);
+  const b = boundTreeNode(tree, { maxDepth: 0 });
+  assert.equal(b.children, undefined);
+  assert.equal(b._truncated, 2);
+});
+
+test("boundTreeNode caps children with maxChildren and reports omissions", () => {
+  const kids = [];
+  for (let i = 0; i < 5; i++) kids.push(n("K" + i, []));
+  const b = boundTreeNode(n("Root", kids), { maxDepth: 1, maxChildren: 2 });
+  assert.deepEqual(b.children.map((c) => c.name), ["K0", "K1"]);
+  assert.equal(b._childrenOmitted, 3);
+  assert.equal(b._childCount, 5);
+});
+
+test("boundTreeNode without maxChildren keeps every child (get_tree parity)", () => {
+  const b = boundTreeNode(n("Root", [n("A", []), n("B", []), n("C", [])]), { maxDepth: 3 });
+  assert.equal(b.children.length, 3);
+  assert.equal(b._childrenOmitted, undefined);
+  assert.equal(b._childCount, undefined);
+  assert.equal(b._truncated, undefined);
+});
+
+test("boundTreeNode leaves a leaf node unchanged", () => {
+  const leaf = n("Leaf", []);
+  assert.deepEqual(boundTreeNode(leaf, { maxDepth: 1, maxChildren: 5 }), leaf);
+});
+
+test("boundTreeNode does not mutate the input node", () => {
+  const tree = n("Root", [n("Child", [n("Grand", [])])]);
+  boundTreeNode(tree, { maxDepth: 0, maxChildren: 1 });
+  assert.equal(tree.children.length, 1);
+  assert.equal(tree.children[0].children.length, 1); // grandchild still intact
 });

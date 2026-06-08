@@ -18,10 +18,13 @@ export {
   selectTagPaths,
   filterAttributes,
   describeAge,
+  boundTreeNode,
   TagMap,
   AttributeMap,
   TagSummary,
   TagPathsResult,
   AttributeFilter,
   AgeDescription,
+  TreeBound,
+  BoundedTreeNode,
 } from "./queries";
