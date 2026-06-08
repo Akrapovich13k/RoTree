@@ -5,6 +5,10 @@ All notable changes to RoTree are listed here. The repo follows
 
 ## Unreleased
 
+_(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
+
+## v0.2.0 — 2026-06-08
+
 ### Added
 - **Configurable Rojo project location** — `rotree compare` / `rotree mcp`
   accept `--rojo-project <path>` (a `*.project.json` file or its folder; also
