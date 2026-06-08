@@ -21,13 +21,17 @@ import {
   BackupPayload,
   Patch,
   ROTREE_VERSION,
+  summarizeTags,
+  selectTagPaths,
+  filterAttributes,
+  describeAge,
 } from "@rotree/core";
 
 const TOOLS = [
   {
     name: "rotree_status",
     description:
-      "Get the freshness and stats of the current RoTree export (place name, exported-at timestamp, instance/script/remote/gui counts). Cheap. Call this first.",
+      "Get the freshness and stats of the current RoTree export: place name, exported-at timestamp, how long ago it was exported (e.g. 'exported 4 days ago'), a `stale` flag when it is older than the configured threshold, instance/script/remote/gui counts, and the resolved Rojo project path (if any). Cheap. Call this first.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -88,8 +92,24 @@ const TOOLS = [
   {
     name: "rotree_list_gui",
     description:
-      "List ScreenGuis and their immediate children. For full nested GUI layout, ask for the file via the `rotree://gui` resource.",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      "List GUI containers (ScreenGui / SurfaceGui / BillboardGui) and their immediate children. " +
+      "Pass `summary: true` for a compact `{ className: count }` aggregate plus the total instead of the flat list (use this first when there are many GUIs). " +
+      "Pass `pathPrefix` to list only one sub-branch (e.g. 'StarterGui.HUD'). " +
+      "For the full nested GUI layout, read the `rotree://gui` resource.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        summary: {
+          type: "boolean",
+          description: "Return `{ totalGui, byClassName }` instead of the flat list.",
+        },
+        pathPrefix: {
+          type: "string",
+          description: "Only include GUIs whose fullPath starts with this string.",
+        },
+      },
+      additionalProperties: false,
+    },
   },
   {
     name: "rotree_search",
@@ -123,22 +143,66 @@ const TOOLS = [
   },
   {
     name: "rotree_get_attributes",
-    description: "Return the attributes map. Optional `path` filters to entries whose key starts with the given prefix.",
+    description:
+      "Return captured instance attributes as { instancePath: { key: value } }. " +
+      "Use `instancePath` to get the attributes of ONE instance (exact match) or a whole sub-tree (the path plus its descendants) — this is the instance path, exactly like `rotree_get_instance`. " +
+      "Use `keyPrefix` to keep only attributes whose KEY NAME starts with a prefix (e.g. 'Owner'). " +
+      "Both filters can be combined. With neither, the full map is returned. " +
+      "NOTE: `path` is a deprecated alias for `instancePath` — prefer `instancePath`.",
     inputSchema: {
       type: "object",
-      properties: { path: { type: "string" } },
+      properties: {
+        instancePath: {
+          type: "string",
+          description:
+            "Instance full path (e.g. 'Workspace.Base1'). Returns that instance's attributes and those of its descendants.",
+        },
+        keyPrefix: {
+          type: "string",
+          description: "Keep only attributes whose key name starts with this prefix.",
+        },
+        path: {
+          type: "string",
+          description: "Deprecated alias for `instancePath`.",
+        },
+      },
       additionalProperties: false,
     },
   },
   {
     name: "rotree_get_tags",
-    description: "Return the CollectionService tag map: { tag: [instance paths] }.",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    description:
+      "Inspect the CollectionService tags. By default returns a COMPACT summary `{ tag: count }` (never the full path lists — those can be hundreds of KB). " +
+      "Pass `tag` (exact name, or a prefix that matches several tags) to get the instance paths for that tag. " +
+      "Use `limit`/`offset` to paginate the paths.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tag: {
+          type: "string",
+          description: "Tag name (exact) or prefix. When set, returns the matching instance paths instead of the summary.",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 5000,
+          default: 200,
+          description: "Max paths to return when `tag` is set. Default 200.",
+        },
+        offset: {
+          type: "integer",
+          minimum: 0,
+          default: 0,
+          description: "Skip this many paths (pagination) when `tag` is set.",
+        },
+      },
+      additionalProperties: false,
+    },
   },
   {
     name: "rotree_rojo_compare",
     description:
-      "If the workspace contains a default.project.json, diff the Studio export against it. Returns { onlyInStudio, onlyInRojo, differentSource }.",
+      "Diff the Studio export against your Rojo project. The project file is taken from the server's --rojo-project option if set, otherwise auto-discovered (workspace root, then parent directories, then immediate sub-folders). Returns { projectFile, onlyInStudio, onlyInRojo, differentSource }. When no project is found, the result lists every location that was searched so you can point the server at the right one.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -326,7 +390,13 @@ interface McpServerOptions {
   exportFolderName?: string;
   port?: number;
   noServe?: boolean;
+  /** Explicit Rojo project file or folder. Auto-discovered when omitted. */
+  rojoProjectPath?: string;
+  /** Warn from rotree_status when the export is older than this many days. */
+  staleAfterDays?: number;
 }
+
+const DEFAULT_STALE_AFTER_DAYS = 3;
 
 function dbg(msg: string): void {
   // MCP stdio is reserved for JSON-RPC — log to stderr only.
@@ -339,9 +409,16 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
     exportFolderName: opts.exportFolderName,
   });
   await reader.ensureFolder();
-  const rojo = new RojoComparator(opts.workspaceRoot, reader);
+  const rojo = new RojoComparator(opts.workspaceRoot, reader, {
+    projectPath: opts.rojoProjectPath,
+    log: (msg) => dbg(msg),
+  });
   const context = new ContextBuilder(reader, rojo);
   const patches = new PatchManager(reader);
+  const staleAfterDays =
+    typeof opts.staleAfterDays === "number" && opts.staleAfterDays > 0
+      ? opts.staleAfterDays
+      : DEFAULT_STALE_AFTER_DAYS;
 
   let httpServer: HttpServer | undefined;
   if (!opts.noServe) {
@@ -428,15 +505,26 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
               "No RoTree export found in .rotree/. Run `rotree serve`, then click 'Export Game Tree' in Roblox Studio.",
             );
           }
+          const age = describeAge(info.exportedAt);
+          const stale = age !== null && age.days >= staleAfterDays;
+          const rojoFile = await rojo.projectFile();
           return jsonResult({
             placeName: info.placeName,
             placeId: info.placeId,
             exportedAt: info.exportedAt,
+            exportedAgo: age?.human ?? "unknown",
+            exportAgeDays: age?.days ?? null,
+            stale,
+            staleThresholdDays: staleAfterDays,
+            warning: stale
+              ? `This export was made ${age?.human} (older than ${staleAfterDays} days). Re-export from Roblox Studio (RoTree → Export Game Tree) for fresh data.`
+              : undefined,
             pluginVersion: info.pluginVersion,
             kind: info.kind,
             stats: info.stats,
             workspaceRoot: opts.workspaceRoot,
             exportFolder: reader.folder,
+            rojoProject: rojoFile,
           });
         }
 
@@ -488,7 +576,31 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
 
         case "rotree_list_gui": {
           const gui = (await reader.gui()) ?? [];
-          const top = gui.filter((g) => g.className === "ScreenGui" || g.className === "SurfaceGui" || g.className === "BillboardGui");
+          const pathPrefix = typeof args.pathPrefix === "string" ? args.pathPrefix : undefined;
+          const summary = args.summary === true;
+
+          const scoped = pathPrefix
+            ? gui.filter((g) => g.fullPath === pathPrefix || g.fullPath.startsWith(pathPrefix))
+            : gui;
+
+          if (summary) {
+            const byClassName: Record<string, number> = {};
+            for (const g of scoped) {
+              byClassName[g.className] = (byClassName[g.className] ?? 0) + 1;
+            }
+            return jsonResult({
+              totalGui: scoped.length,
+              byClassName,
+              ...(pathPrefix ? { pathPrefix } : {}),
+            });
+          }
+
+          const top = scoped.filter(
+            (g) =>
+              g.className === "ScreenGui" ||
+              g.className === "SurfaceGui" ||
+              g.className === "BillboardGui",
+          );
           return jsonResult(
             top.map((g: GuiEntry) => ({
               name: g.name,
@@ -561,6 +673,17 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
         case "rotree_get_summary": {
           const file = path.join(reader.folder, "summary.md");
           const text = await fs.readFile(file, "utf8").catch(() => "(no summary yet)");
+          // Prepend a read-time freshness line — summary.md is static on disk, so
+          // age has to be computed when the AI actually reads it.
+          const info = await reader.lastExportInfo();
+          const age = info ? describeAge(info.exportedAt) : null;
+          if (age) {
+            const stale = age.days >= staleAfterDays;
+            const banner = stale
+              ? `> ⚠️ This export was made ${age.human} (older than ${staleAfterDays} days). Consider re-exporting from Roblox Studio.\n\n`
+              : `> Exported ${age.human}.\n\n`;
+            return textResult(banner + text);
+          }
           return textResult(text);
         }
 
@@ -568,27 +691,45 @@ export async function startMcpServer(opts: McpServerOptions): Promise<void> {
           const attrs = (await reader.readJson<Record<string, Record<string, unknown>>>(
             "attributes-map.json",
           )) ?? {};
-          const prefix = typeof args.path === "string" ? args.path : "";
-          if (!prefix) return jsonResult(attrs);
-          const filtered: Record<string, Record<string, unknown>> = {};
-          for (const [k, v] of Object.entries(attrs)) {
-            if (k.startsWith(prefix)) filtered[k] = v;
-          }
-          return jsonResult(filtered);
+          // `path` is a deprecated alias for `instancePath` (the old param name).
+          const instancePath =
+            typeof args.instancePath === "string"
+              ? args.instancePath
+              : typeof args.path === "string"
+                ? args.path
+                : undefined;
+          const keyPrefix = typeof args.keyPrefix === "string" ? args.keyPrefix : undefined;
+          return jsonResult(filterAttributes(attrs, { instancePath, keyPrefix }));
         }
 
         case "rotree_get_tags": {
           const tags = (await reader.readJson<Record<string, string[]>>("collection-tags.json")) ?? {};
-          return jsonResult(tags);
+          const tag = typeof args.tag === "string" ? args.tag : undefined;
+          if (!tag) {
+            // Compact { tag: count } summary — never dump the full path lists.
+            return jsonResult(summarizeTags(tags));
+          }
+          const limit = typeof args.limit === "number" ? args.limit : 200;
+          const offset = typeof args.offset === "number" ? args.offset : 0;
+          const result = selectTagPaths(tags, tag, offset, limit);
+          if (result.matchedTags.length === 0) {
+            return textResult(`no tags match "${tag}". Call rotree_get_tags with no arguments to see all tags.`);
+          }
+          return jsonResult(result);
         }
 
         case "rotree_rojo_compare": {
           if (!(await rojo.detect())) {
-            return textResult("no default.project.json in workspace");
+            return jsonResult({
+              error: "no Rojo project found",
+              searched: rojo.searchedLocations(),
+              hint: "Start the server with --rojo-project <path> (or set ROTREE_ROJO_PROJECT) to point at your default.project.json.",
+            });
           }
+          const projectFile = await rojo.projectFile();
           const diff = await rojo.compare();
-          if (!diff) return textResult("could not parse Rojo project");
-          return jsonResult(diff);
+          if (!diff) return textResult(`could not parse Rojo project at ${projectFile}`);
+          return jsonResult({ projectFile, ...diff });
         }
 
         case "rotree_get_output": {

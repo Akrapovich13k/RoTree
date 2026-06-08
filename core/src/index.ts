@@ -11,5 +11,17 @@ export {
   LogHandler,
 } from "./HttpServer";
 export { PatchManager } from "./PatchManager";
-export { RojoComparator, RojoDiff } from "./RojoComparator";
+export { RojoComparator, RojoDiff, RojoComparatorOptions } from "./RojoComparator";
 export { ContextBuilder } from "./ContextBuilder";
+export {
+  summarizeTags,
+  selectTagPaths,
+  filterAttributes,
+  describeAge,
+  TagMap,
+  AttributeMap,
+  TagSummary,
+  TagPathsResult,
+  AttributeFilter,
+  AgeDescription,
+} from "./queries";

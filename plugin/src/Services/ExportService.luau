@@ -120,7 +120,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 		parts = PartScanner.Scan(roots, { maxParts = 2000 })
 		attributes = AttributeScanner.Scan(roots)
 		tags = TagScanner.Scan()
-		properties = PropertyScanner.Scan(roots, { maxInstances = 5000 })
+		properties = PropertyScanner.Scan(roots)
 	elseif kind == "scripts" then
 		scripts = ScriptScanner.Scan(roots, { ignore = ignore, safeMode = safeMode })
 	elseif kind == "remotes" then
@@ -146,6 +146,7 @@ function ExportService.Run(kind: ExportKind, safeMode: boolean): (boolean, strin
 	local contextMd = ContextGenerator.Build({
 		placeName = game.Name,
 		placeId = game.PlaceId,
+		pluginVersion = Config.PLUGIN_VERSION,
 		tree = tree,
 		scripts = scripts,
 		remotes = remotes,

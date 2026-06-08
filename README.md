@@ -22,7 +22,7 @@
 - **Studio Output stream** — the plugin captures `LogService.MessageOut` (Print, Info, Warning, Error) and the AI can read it on demand via `rotree_get_output`.
 - **AI can modify the game** (opt-in) — create / modify / delete any Instance via `rotree_apply_patch`. Critical paths (DataStore, leaderstats, MarketplaceService, anti-cheat) are always refused.
 - **Backup before every patch** + Ctrl+Z support via `ChangeHistoryService`.
-- **Rojo-aware** — diffs Studio state against your `default.project.json`.
+- **Rojo-aware** — diffs Studio state against your Rojo project. The project is auto-discovered (workspace root, parent dirs, sub-folders) or pinned with `--rojo-project`.
 - **`.rotreeignore`** — hide sensitive scripts/folders from the AI; `critical:` prefix elevates to double-confirm.
 
 Full list and history: [`CHANGELOG.md`](CHANGELOG.md).

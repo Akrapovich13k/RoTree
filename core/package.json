@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc -p .",
     "watch": "tsc -w -p .",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "npm run build && node --test test/queries.test.js test/rojo.test.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

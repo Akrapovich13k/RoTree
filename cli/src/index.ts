@@ -91,9 +91,12 @@ function help(): void {
   console.log("  help         Show this help.");
   console.log("");
   console.log("Options:");
-  console.log("  --port <n>          Port to listen on (default 34873)");
-  console.log("  --cwd <dir>         Workspace root (default: current directory)");
-  console.log("  --output <dir>      Subfolder for exports (default: .rotree)");
+  console.log("  --port <n>            Port to listen on (default 34873)");
+  console.log("  --cwd <dir>           Workspace root (default: current directory)");
+  console.log("  --output <dir>        Subfolder for exports (default: .rotree)");
+  console.log("  --rojo-project <p>    Path to a Rojo project file or its folder");
+  console.log("                        (default: auto-discover near --cwd)");
+  console.log("  --stale-days <n>      Warn when an export is older than n days (mcp; default 3)");
   console.log("");
   console.log("Examples:");
   console.log("  rotree serve");
@@ -114,7 +117,19 @@ async function commandMcp(args: ParsedArgs): Promise<void> {
     10,
   );
   const noServe = args.flags["no-serve"] === true;
-  await startMcpServer({ workspaceRoot, exportFolderName, port, noServe });
+  const rojoProjectPath = rojoProjectFlag(args);
+  const staleAfterDays =
+    typeof args.flags["stale-days"] === "string"
+      ? parseInt(args.flags["stale-days"], 10)
+      : undefined;
+  await startMcpServer({
+    workspaceRoot,
+    exportFolderName,
+    port,
+    noServe,
+    rojoProjectPath,
+    staleAfterDays,
+  });
 }
 
 function commandMcpConfig(args: ParsedArgs): void {
@@ -245,6 +260,15 @@ function log(level: "info" | "warn" | "error", msg: string): void {
   console.log(`${stamp} ${tag} ${msg}`);
 }
 
+// `--rojo-project` (or `--project`) points at a Rojo project file or its
+// directory. Falls back to the ROTREE_ROJO_PROJECT env var, then auto-discovery.
+function rojoProjectFlag(args: ParsedArgs): string | undefined {
+  const flag = args.flags["rojo-project"] ?? args.flags.project;
+  if (typeof flag === "string") return flag;
+  if (process.env.ROTREE_ROJO_PROJECT) return process.env.ROTREE_ROJO_PROJECT;
+  return undefined;
+}
+
 function buildContext(args: ParsedArgs): {
   workspaceRoot: string;
   exportFolderName: string;
@@ -260,7 +284,10 @@ function buildContext(args: ParsedArgs): {
     typeof args.flags.output === "string" ? args.flags.output : ".rotree";
   const reader = new ExportReader({ workspaceRoot, exportFolderName });
   const patches = new PatchManager(reader);
-  const rojo = new RojoComparator(workspaceRoot, reader);
+  const rojo = new RojoComparator(workspaceRoot, reader, {
+    projectPath: rojoProjectFlag(args),
+    log: (msg) => log("info", msg),
+  });
   const context = new ContextBuilder(reader, rojo);
   return { workspaceRoot, exportFolderName, reader, patches, rojo, context };
 }
@@ -331,7 +358,9 @@ async function commandContext(args: ParsedArgs): Promise<void> {
 async function commandCompare(args: ParsedArgs): Promise<void> {
   const { rojo } = buildContext(args);
   if (!(await rojo.detect())) {
-    log("warn", "no default.project.json found in workspace");
+    log("warn", "no Rojo project found. Looked in:");
+    console.log(await rojo.describeSearch());
+    log("warn", "Pass --rojo-project <path> to point at it explicitly.");
     process.exit(1);
   }
   const diff = await rojo.compare();

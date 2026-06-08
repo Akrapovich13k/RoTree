@@ -5,6 +5,7 @@
   "workspaces": ["core", "cli", "extension"],
   "scripts": {
     "build": "npm run build -w @rotree/core && npm run build -w @rotree/cli && npm run build -w rotree",
-    "lint": "npm run lint -ws --if-present"
+    "lint": "npm run lint -ws --if-present",
+    "test": "npm run test -w @rotree/core"
   }
 }
