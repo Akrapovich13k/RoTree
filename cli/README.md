@@ -43,7 +43,7 @@ rotree help               Show usage
 ```bash
 $ cd ~/MyRobloxGame
 $ rotree serve
-RoTree v0.2.0
+RoTree v0.2.1
 12:34:56 info workspace: /home/me/MyRobloxGame
 12:34:56 info writing to .rotree
 12:34:56 info bridge listening on http://localhost:34873
