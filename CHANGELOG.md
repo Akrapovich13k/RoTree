@@ -7,6 +7,46 @@ All notable changes to RoTree are listed here. The repo follows
 
 _(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
 
+## v0.2.0 — 2026-06-08
+
+### Added
+- **Configurable Rojo project location** — `rotree compare` / `rotree mcp`
+  accept `--rojo-project <path>` (a `*.project.json` file or its folder; also
+  the `ROTREE_ROJO_PROJECT` env var). When omitted, the project is now
+  discovered robustly: workspace root → parent directories → immediate
+  sub-folders → any `*.project.json`. The chosen file is logged, and
+  `rotree_rojo_compare` returns the resolved `projectFile`.
+- **`rotree_get_tags` filtering & pagination** — defaults to a compact
+  `{ tag: count }` summary instead of dumping the whole tag→paths map
+  (which could exceed the MCP token budget). Pass `tag` (exact or prefix)
+  for the paths, with `limit`/`offset`.
+- **`rotree_get_attributes` instance filter** — new `instancePath` returns the
+  attributes of one instance (or a sub-tree) the same way `rotree_get_instance`
+  takes a path, and `keyPrefix` filters by attribute key name. The old `path`
+  parameter is kept as a deprecated alias.
+- **`rotree_list_gui` aggregation** — `summary: true` returns
+  `{ className: count }` plus the total; `pathPrefix` scopes to one branch.
+- **Export freshness** — `rotree_status` now reports how long ago the export
+  was made and flags it as `stale` past a threshold (`--stale-days`, default 3);
+  `rotree_get_summary` prepends a read-time freshness banner.
+
+### Fixed
+- **GUI properties now captured** — the property scan starved GUI: a 5000-cap
+  per-root DFS exhausted its budget inside `Workspace` and returned before
+  reaching `StarterGui`. It now does a fair breadth-first walk across all roots
+  and always captures GUI / UI / script / remote / value instances, so
+  `rotree_get_instance` returns Text, Size, colours, UIStroke/UIGradient, etc.
+- **Version drift** — `AI_CONTEXT.md` was hard-coded to "RoTree v0.1.0" while the
+  rest of the export reported 0.1.2. The context generator now uses
+  `Config.PLUGIN_VERSION`, the single source of truth.
+- **Richer attribute capture** — Model/Folder attributes of type
+  CFrame / BrickColor / UDim / NumberRange / Rect / Font are now serialized
+  into structured JSON instead of a lossy `tostring()`.
+
+### Changed
+- MCP tool `description`s rewritten to describe their parameters accurately —
+  in particular the previously ambiguous `path` on `rotree_get_attributes`.
+
 ## v0.1.2 — 2026-05-25
 
 ### Fixed

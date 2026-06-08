@@ -28,20 +28,22 @@ rotree help               Show usage
 
 ## Options
 
-| Flag             | Default   | Purpose                                  |
-|------------------|-----------|------------------------------------------|
-| `--port <n>`     | `34873`   | Port for the bridge (serve)              |
-| `--cwd <dir>`    | `$PWD`    | Workspace root                           |
-| `--output <dir>` | `.rotree` | Export subfolder                         |
-| `--plugin <dir>` | `./plugin`| Plugin source dir (build)                |
-| `--out <file>`   | `RoTree.rbxm` | Build output filename                |
+| Flag                 | Default       | Purpose                                          |
+|----------------------|---------------|--------------------------------------------------|
+| `--port <n>`         | `34873`       | Port for the bridge (serve)                      |
+| `--cwd <dir>`        | `$PWD`        | Workspace root                                   |
+| `--output <dir>`     | `.rotree`     | Export subfolder                                 |
+| `--rojo-project <p>` | auto-discover | Rojo project file or folder (compare, mcp). Also `ROTREE_ROJO_PROJECT`. |
+| `--stale-days <n>`   | `3`           | When `rotree_status` flags an export as stale (mcp) |
+| `--plugin <dir>`     | `./plugin`    | Plugin source dir (build)                        |
+| `--out <file>`       | `RoTree.rbxm` | Build output filename                            |
 
 ## Example session
 
 ```bash
 $ cd ~/MyRobloxGame
 $ rotree serve
-RoTree v0.1.0
+RoTree v0.2.0
 12:34:56 info workspace: /home/me/MyRobloxGame
 12:34:56 info writing to .rotree
 12:34:56 info bridge listening on http://localhost:34873

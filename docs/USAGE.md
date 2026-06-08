@@ -75,7 +75,8 @@ There is also a **Safe Mode** checkbox at the top: when on, scripts marked sensi
 | `rotree version`    | Print version.                                                  |
 | `rotree help`       | Show usage.                                                     |
 
-All commands accept `--cwd <dir>`, `--output <dir>`, and (for `serve`) `--port <n>`.
+All commands accept `--cwd <dir>` and `--output <dir>`; `serve` also takes `--port <n>`.
+`compare`/`mcp` accept `--rojo-project <path>` (a `*.project.json` file or its folder; also `ROTREE_ROJO_PROJECT`) — use it when your Rojo code lives somewhere other than the export folder. `mcp` also accepts `--stale-days <n>` (default 3) to control when `rotree_status` flags an export as stale.
 
 ## MCP tools (what the AI can call)
 
@@ -83,22 +84,22 @@ When you wire `rotree mcp` into Claude Code or Claude Desktop, the AI gets these
 
 | Tool                  | Returns                                                           |
 |-----------------------|-------------------------------------------------------------------|
-| `rotree_status`       | Place name, last-export timestamp, stats. Call first.             |
+| `rotree_status`       | Place name, last-export timestamp, **how long ago it was exported** (+ a `stale` flag), stats, resolved Rojo project. Call first. |
 | `rotree_get_tree`     | A subtree by `path` + `maxDepth`. No source.                      |
 | `rotree_list_scripts` | Lightweight script list (name, path, lines). Filter optional.     |
 | `rotree_get_script`   | One script's full source by path.                                 |
 | `rotree_list_remotes` | All RemoteEvents / RemoteFunctions / Bindables.                   |
-| `rotree_list_gui`     | Top-level ScreenGuis / SurfaceGuis.                               |
+| `rotree_list_gui`     | GUI containers. `summary: true` → `{ className: count }` + total; `pathPrefix` scopes to one branch. |
 | `rotree_search`       | Substring search across name/path/class. Kind filter optional.    |
 | `rotree_get_context`  | The AI_CONTEXT.md content.                                    |
 | `rotree_get_summary`  | The summary.md content.                                           |
 | `rotree_get_output`   | **Studio Output panel** — recent Print/Info/Warning/Error from LogService. Filter by `level`, `filter`, `limit`, `sinceElapsed`. |
 | `rotree_clear_output` | Wipe the buffered output (bridge side only — does not touch Studio's panel). |
-| `rotree_get_attributes` | Attributes map (optionally filtered by path prefix).            |
-| `rotree_get_tags`     | CollectionService tag map.                                        |
+| `rotree_get_attributes` | Instance attributes. `instancePath` = one instance + its subtree (like `rotree_get_instance`); `keyPrefix` = filter by attribute key name. (`path` is a deprecated alias for `instancePath`.) |
+| `rotree_get_tags`     | Compact `{ tag: count }` summary by default. `tag` (exact or prefix) returns that tag's paths; `limit`/`offset` paginate. |
 | `rotree_get_instance` | **Full property bag** for one instance (Position, Color, Material, Text, Source, attributes, tags…). |
 | `rotree_get_properties` | Bulk properties by path prefix.                                 |
-| `rotree_rojo_compare` | Diff vs `default.project.json`.                                   |
+| `rotree_rojo_compare` | Diff vs your Rojo project (auto-discovered, or `--rojo-project`). Lists where it searched if none is found. |
 | `rotree_write_patch`  | Save a patch into `.rotree/patches/`. **Does not apply it.**      |
 | `rotree_apply_patch`  | **Apply to live game** — only if user toggled "Allow AI auto-apply" in plugin. Critical patches always refused (use `rotree_write_patch`). |
 
