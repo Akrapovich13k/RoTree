@@ -29,6 +29,13 @@ export interface RojoComparatorOptions {
   projectPath?: string;
   /** How many parent directories to walk up while auto-discovering. */
   maxParentLevels?: number;
+  /**
+   * How deep to recurse into sub-directories while auto-discovering. The
+   * Rojo code often lives a few folders below the export workspace (e.g.
+   * `workspaceRoot/packages/game/default.project.json`), so we scan further
+   * than the immediate children. Defaults to 3.
+   */
+  maxScanDepth?: number;
   /** Optional logger — used to announce which project file was selected. */
   log?: (msg: string) => void;
 }
@@ -39,12 +46,13 @@ export interface RojoComparatorOptions {
  * The Rojo project is no longer assumed to live exactly at
  * `workspaceRoot/default.project.json`. It can be supplied explicitly, or is
  * discovered robustly by looking in the workspace root, then walking up parent
- * directories, then scanning immediate sub-directories. The resolved path is
+ * directories, then scanning sub-directories (bounded recursion). The resolved path is
  * cached and the list of locations we looked at is kept for error messages.
  */
 export class RojoComparator {
   private readonly explicitProjectPath?: string;
   private readonly maxParentLevels: number;
+  private readonly maxScanDepth: number;
   private readonly log: (msg: string) => void;
 
   private resolvedFile: string | null | undefined; // undefined = not resolved yet
@@ -57,6 +65,7 @@ export class RojoComparator {
   ) {
     this.explicitProjectPath = options.projectPath;
     this.maxParentLevels = options.maxParentLevels ?? 5;
+    this.maxScanDepth = options.maxScanDepth ?? 3;
     this.log = options.log ?? (() => {});
   }
 
@@ -165,9 +174,10 @@ export class RojoComparator {
       dir = parent;
     }
 
-    // 3. Immediate sub-directories of the workspace root (depth 1). Handy when
-    //    the export folder sits at the repo root but the Rojo code lives in a
-    //    sub-folder (e.g. `game/`, `src/`).
+    // 3. Sub-directories of the workspace root, recursing up to `maxScanDepth`
+    //    (breadth-first, shallowest wins). Handy when the export folder sits at
+    //    the repo root but the Rojo code lives a few folders down (e.g.
+    //    `game/`, `src/`, `packages/game/`).
     const subHit = await this.scanSubdirs(this.workspaceRoot);
     if (subHit) return subHit;
 
@@ -232,12 +242,6 @@ export class RojoComparator {
   }
 
   private async scanSubdirs(root: string): Promise<string | null> {
-    let entries: import("fs").Dirent[];
-    try {
-      entries = await fs.readdir(root, { withFileTypes: true });
-    } catch {
-      return null;
-    }
     const skip = new Set([
       "node_modules",
       ".git",
@@ -247,11 +251,30 @@ export class RojoComparator {
       "build",
       ".vscode",
     ]);
-    for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!e.isDirectory()) continue;
-      if (e.name.startsWith(".") || skip.has(e.name)) continue;
-      const hit = await this.defaultProjectIn(path.join(root, e.name));
-      if (hit) return hit;
+
+    // Breadth-first by depth so a shallower project is preferred over a deeper
+    // one. `frontier` holds the directories whose children we examine next.
+    let frontier: string[] = [root];
+    for (let depth = 1; depth <= this.maxScanDepth && frontier.length > 0; depth++) {
+      const next: string[] = [];
+      for (const dir of frontier) {
+        let entries: import("fs").Dirent[];
+        try {
+          entries = await fs.readdir(dir, { withFileTypes: true });
+        } catch {
+          continue;
+        }
+        const subdirs = entries
+          .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !skip.has(e.name))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        for (const e of subdirs) {
+          const childDir = path.join(dir, e.name);
+          const hit = await this.defaultProjectIn(childDir);
+          if (hit) return hit;
+          next.push(childDir);
+        }
+      }
+      frontier = next;
     }
     return null;
   }

@@ -5,7 +5,26 @@ All notable changes to RoTree are listed here. The repo follows
 
 ## Unreleased
 
-_(empty — open a PR and add your entry here under Added / Changed / Fixed / Removed.)_
+### Fixed
+- **`rotree_rojo_compare` can now actually find your project.** Two gaps closed:
+  - `rotree mcp-config` / `rotree mcp-install` accept `--rojo-project <path>` and
+    bake it into the generated MCP server invocation, so the explicit project path
+    (or `ROTREE_ROJO_PROJECT`) is honoured when the AI client launches the server —
+    previously there was no way to pass it in that context.
+  - Auto-discovery now scans sub-directories **recursively** (breadth-first, up to
+    3 levels deep, shallowest wins) instead of only the immediate children, so a
+    `default.project.json` nested a few folders down (e.g. `packages/game/`) is
+    found without configuration. The resolved path shows up in `rotree_status`.
+- **`rotree_get_instance` no longer dumps an entire subtree.** On a large
+  Model/Folder it serialized every descendant (hundreds of KB) and blew the MCP
+  token budget. The structural `node` is now bounded by `maxDepth` (default 1) and
+  `maxChildren` (default 50); omitted nodes are reported via `_truncated` /
+  `_childrenOmitted` / `_childCount`. The target's own properties/attributes/tags
+  are unchanged.
+
+### Changed
+- `rotree_get_tree` and `rotree_get_instance` share one tree-bounding helper
+  (`boundTreeNode`); `rotree_get_tree` output is unchanged.
 
 ## v0.2.0 — 2026-06-08
 

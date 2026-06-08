@@ -45,6 +45,33 @@ test("scans immediate sub-directories", async () => {
   assert.equal(await rojo.projectFile(), path.join(root, "game", "default.project.json"));
 });
 
+test("scans nested sub-directories up to the bounded depth", async () => {
+  const root = tmp();
+  // Rojo project lives two folders below the export workspace.
+  write(path.join(root, "packages", "game", "default.project.json"), JSON.stringify({ tree: {} }));
+  const rojo = comparator(root);
+  assert.equal(
+    await rojo.projectFile(),
+    path.join(root, "packages", "game", "default.project.json"),
+  );
+});
+
+test("prefers a shallower project over a deeper one", async () => {
+  const root = tmp();
+  write(path.join(root, "near", "default.project.json"), JSON.stringify({ tree: {} }));
+  write(path.join(root, "near", "deep", "default.project.json"), JSON.stringify({ tree: {} }));
+  const rojo = comparator(root);
+  assert.equal(await rojo.projectFile(), path.join(root, "near", "default.project.json"));
+});
+
+test("does not recurse past maxScanDepth", async () => {
+  const root = tmp();
+  write(path.join(root, "a", "b", "c", "default.project.json"), JSON.stringify({ tree: {} }));
+  const reader = new ExportReader({ workspaceRoot: root });
+  const rojo = new RojoComparator(root, reader, { maxScanDepth: 1 });
+  assert.equal(await rojo.detect(), false);
+});
+
 test("honours an explicit project file path", async () => {
   const root = tmp();
   const explicit = path.join(root, "place", "client.project.json");

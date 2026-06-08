@@ -102,6 +102,7 @@ function help(): void {
   console.log("  rotree serve");
   console.log("  rotree serve --port 34900");
   console.log("  rotree mcp --cwd ~/MyGame");
+  console.log("  rotree mcp-install --cwd ~/MyGame --rojo-project ~/MyGame/game/default.project.json");
   console.log("  rotree build --plugin ./plugin --out RoTree.rbxm");
   console.log("");
 }
@@ -136,11 +137,14 @@ function commandMcpConfig(args: ParsedArgs): void {
   const cwd = typeof args.flags.cwd === "string"
     ? path.resolve(args.flags.cwd)
     : process.cwd();
+  const mcpArgs = ["mcp", "--cwd", cwd];
+  const rojoProject = rojoProjectFlag(args);
+  if (rojoProject) mcpArgs.push("--rojo-project", path.resolve(rojoProject));
   const config = {
     mcpServers: {
       rotree: {
         command: "rotree",
-        args: ["mcp", "--cwd", cwd],
+        args: mcpArgs,
       },
     },
   };
@@ -208,9 +212,12 @@ async function commandMcpInstall(args: ParsedArgs): Promise<void> {
   const client = (typeof args.flags.client === "string" ? args.flags.client : "all").toLowerCase();
   const name = typeof args.flags.name === "string" ? args.flags.name : "rotree";
 
+  const mcpArgs = ["mcp", "--cwd", cwd];
+  const rojoProject = rojoProjectFlag(args);
+  if (rojoProject) mcpArgs.push("--rojo-project", path.resolve(rojoProject));
   const entry: Record<string, unknown> = {
     command: "rotree",
-    args: ["mcp", "--cwd", cwd],
+    args: mcpArgs,
   };
 
   banner();
